@@ -13,8 +13,9 @@ import java.time.LocalDateTime;
 @Entity
 public class Schedule {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="schdule_id")
+    @SequenceGenerator(name = "schedule_seq", sequenceName = "schedule_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "schedule_seq")
+    @Column(name = "schedule_id")
     private Long scheduleId;
 
     @ManyToOne(fetch = FetchType.LAZY)
