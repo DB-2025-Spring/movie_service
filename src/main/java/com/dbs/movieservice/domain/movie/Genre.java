@@ -11,8 +11,9 @@ import lombok.ToString;
 @ToString
 public class Genre {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="genre_id")
+    @SequenceGenerator(name = "genre_seq", sequenceName = "genre_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "genre_seq")
+    @Column(name = "genre_id")
     private Long genreId;
     @Column(length = 100, name="genre_name")
     private String genreName;
