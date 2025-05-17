@@ -14,7 +14,7 @@ import java.time.LocalDate;
 public class Movie {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long movie_id;
+    private Long movieId;
     @Column(name = "view_rating", length = 10)
     private String viewRating;
     @Column(name = "movie_name", length = 100, nullable = false)
