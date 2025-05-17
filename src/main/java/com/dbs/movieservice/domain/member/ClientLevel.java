@@ -7,7 +7,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-public class Level {
+@Table(name="client_level")
+public class ClientLevel {
     @Id
     @SequenceGenerator(name = "level_seq", sequenceName = "level_seq", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "level_seq")

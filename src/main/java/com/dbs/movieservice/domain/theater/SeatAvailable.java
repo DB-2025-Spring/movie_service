@@ -23,10 +23,7 @@ public class SeatAvailable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("seatId")
-    @JoinColumns({
-            @JoinColumn(name = "seat_id", referencedColumnName = "seat_id", nullable = false),
-            @JoinColumn(name = "theater_id", referencedColumnName = "theater_id", nullable = false)
-    })
+    @JoinColumn(name = "seat_id", nullable = false)
     private Seat seat;
 
     @Column(name = "is_booked", length = 1, nullable = false)
@@ -37,8 +34,9 @@ public class SeatAvailable {
     @Setter
     @Embeddable
     public static class SeatAvailableId implements Serializable {
-
+        @Column(name = "schedule_id")
         private Long scheduleId;
+        @Column(name = "seat_id")
         private Long seatId;
 
         public SeatAvailableId() {}

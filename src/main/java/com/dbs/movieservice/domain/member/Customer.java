@@ -39,5 +39,5 @@ public class Customer {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "level_id", nullable = false)
-    private Level level;
+    private ClientLevel level;
 }
