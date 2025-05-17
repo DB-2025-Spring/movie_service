@@ -12,8 +12,9 @@ import lombok.ToString;
 
 public class Seat {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="seat_id")
+    @SequenceGenerator(name = "seat_seq", sequenceName = "seat_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seat_seq")
+    @Column(name = "seat_id")
     private Long seatId;
 
     @ManyToOne(fetch = FetchType.LAZY)
