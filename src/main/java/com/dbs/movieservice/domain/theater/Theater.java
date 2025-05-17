@@ -12,8 +12,10 @@ import lombok.ToString;
 @ToString
 public class Theater {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long theater_id;
+    @SequenceGenerator(name = "theater_seq", sequenceName = "theater_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "theater_seq")
+    @Column(name = "theater_id")
+    private Long theaterId;
     @Column(nullable = false, length = 100)
     private String theater_name;
     private int total_seats;
