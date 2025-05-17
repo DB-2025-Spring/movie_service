@@ -13,7 +13,9 @@ import java.time.LocalDate;
 @ToString
 public class Movie {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @SequenceGenerator(name = "movie_seq", sequenceName = "movie_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "movie_seq")
+    @Column(name = "movie_id")
     private Long movieId;
     @Column(name = "view_rating", length = 10)
     private String viewRating;
