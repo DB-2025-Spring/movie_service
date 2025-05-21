@@ -13,7 +13,7 @@ import java.util.Objects;
 @Getter
 @Setter
 @Table(name="issue_cupon")
-public class IssueCupon {
+public class IssueCoupon {
     @EmbeddedId
     private IssueCouponId id;
 
