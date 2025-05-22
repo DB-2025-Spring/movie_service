@@ -18,16 +18,16 @@ public class TheaterServiceTest {
     void createTheater_shouldPersistEntity() {
         // given
         Theater theater = new Theater();
-        theater.setTheater_name("1번상영관");
-        theater.setTotal_seats(150);
+        theater.setTheaterName("1번상영관");
+        theater.setTotalSeats(150);
 
         // when
         Theater saved = theaterService.createTheater(theater);
 
         // then
         assertThat(saved.getTheaterId()).isNotNull(); // 자동 생성된 ID
-        assertThat(saved.getTheater_name()).isEqualTo("1번상영관");
-        assertThat(saved.getTotal_seats()).isEqualTo(150);
+        assertThat(saved.getTheaterName()).isEqualTo("1번상영관");
+        assertThat(saved.getTotalSeats()).isEqualTo(150);
         assertThat(theaterRepository.findById(saved.getTheaterId())).isPresent(); // 실제 DB에 저장됨
     }
 }
