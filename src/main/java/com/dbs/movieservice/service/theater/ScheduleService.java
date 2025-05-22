@@ -20,12 +20,12 @@ public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final TheaterRepository theaterRepository;
     private final MovieRepository movieRepository;
-    private final SeatRepository seatRepository;
-    public ScheduleService(ScheduleRepository scheduleRepository, TheaterRepository theaterRepository, MovieRepository movieRepository, SeatRepository seatRepository) {
+    private final SeatAvailableService seatAvailableService;
+    public ScheduleService(ScheduleRepository scheduleRepository, TheaterRepository theaterRepository, MovieRepository movieRepository, SeatAvailableService seatAvailableService) {
         this.scheduleRepository = scheduleRepository;
         this.theaterRepository = theaterRepository;
         this.movieRepository = movieRepository;
-        this.seatRepository = seatRepository;
+        this.seatAvailableService = seatAvailableService;
     }
 
     //이 메소드는 아직, 다음날에 있는 상영일정은 고려 안함. 추후 수정하겠습니다.
@@ -68,7 +68,9 @@ public class ScheduleService {
         schedule.setScheduleEndTime(endTime);
         schedule.setScheduleSequence((int) sequence);
 
-        return scheduleRepository.save(schedule);
+        Schedule cSchedule = scheduleRepository.save(schedule);
+        seatAvailableService.createSeatAvailableForSchedule(cSchedule);
+        return cSchedule;
     }
 
 }
