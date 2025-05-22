@@ -10,6 +10,7 @@ import lombok.ToString;
 @Setter
 @Entity
 @ToString
+@Table(name="theater")
 public class Theater {
     @Id
     @SequenceGenerator(name = "theater_seq", sequenceName = "theater_seq", allocationSize = 1)

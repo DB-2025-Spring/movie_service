@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
+@Table(name="schedule")
 public class Schedule {
     @Id
     @SequenceGenerator(name = "schedule_seq", sequenceName = "schedule_seq", allocationSize = 1)
@@ -34,4 +35,7 @@ public class Schedule {
 
     @Column(name = "schedule_start_time", nullable = false)
     private LocalDateTime scheduleStartTime;
+
+    @Column(name = "schedule_end_time", nullable = false)
+    private LocalDateTime scheduleEndTime;
 }
