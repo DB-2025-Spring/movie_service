@@ -28,16 +28,47 @@ public class ScheduleService {
         this.seatRepository = seatRepository;
     }
 
+    //이 메소드는 아직, 다음날에 있는 상영일정은 고려 안함. 추후 수정하겠습니다.
     @Transactional
-    public void createSchedule(Long theaterId, Long movieId, LocalDateTime startTime) {
+    public Schedule createSchedule(Long theaterId, Long movieId, LocalDateTime startTime) {
         LocalDate date = startTime.toLocalDate();
+
         Theater theater = theaterRepository.findById(theaterId)
                 .orElseThrow(() -> new EntityNotFoundException("상영관이 존재하지 않습니다."));
         Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> new EntityNotFoundException("영화가 존재하지 않습니다."));
 
-        List<Schedule> schedulesOnSameDate = scheduleRepository.findByScheduleDate(date);
+        LocalDateTime endTime = startTime.plusMinutes(movie.getRunningTime());
 
+        List<Schedule> schedulesOnSameDate = scheduleRepository.findByScheduleDateAndTheater_TheaterId(date, theaterId);
+        boolean overlaps = schedulesOnSameDate.stream().anyMatch(otherSchedule -> {
+            LocalDateTime otherScheduleStartTime = otherSchedule.getScheduleStartTime();
+            LocalDateTime otherScheduleEndTime = otherSchedule.getScheduleEndTime();
+
+            return !(endTime.isBefore(otherScheduleStartTime) || startTime.isAfter(otherScheduleEndTime));
+        });
+
+        if (overlaps) {
+            throw new IllegalStateException("해당 시간에 상영 중인 영화가 이미 존재합니다.");
+        }
+        //추가하려는 영화의 순서를 찾음.
+        long sequence = schedulesOnSameDate.stream()
+                .filter(s -> s.getScheduleStartTime().isBefore(startTime))
+                .count() + 1;
+        //추가하려는 영화보다 늦게 시작하는 영화의 순서를 뒤로 미룸.
+        schedulesOnSameDate.stream()
+                .filter(s -> s.getScheduleStartTime().isAfter(startTime))
+                .forEach(s -> s.setScheduleSequence(s.getScheduleSequence() + 1));
+
+        Schedule schedule = new Schedule();
+        schedule.setTheater(theater);
+        schedule.setMovie(movie);
+        schedule.setScheduleDate(date);
+        schedule.setScheduleStartTime(startTime);
+        schedule.setScheduleEndTime(endTime);
+        schedule.setScheduleSequence((int) sequence);
+
+        return scheduleRepository.save(schedule);
     }
 
 }

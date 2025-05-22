@@ -7,5 +7,5 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
-    List<Schedule> findByScheduleDate(LocalDate scheduleDate);
+    List<Schedule> findByScheduleDateAndTheater_TheaterId(LocalDate scheduleDate, Long theaterId);
 }
