@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -70,5 +72,16 @@ public class AuthController {
         // DTO를 서비스 계층에 전달하여 Customer 생성 및 저장 로직을 처리
         customerService.registerCustomer(signupRequest);
         return ResponseEntity.ok("User registered successfully!");
+    }
+    
+    @GetMapping("/check-username")
+    public ResponseEntity<?> checkUsername(@RequestParam String customerInputId) {
+        boolean isDuplicate = customerService.checkDuplicateCustomerId(customerInputId);
+        
+        if (isDuplicate) {
+            return ResponseEntity.ok().body("{\"available\": false, \"message\": \"Username is already taken\"}");
+        } else {
+            return ResponseEntity.ok().body("{\"available\": true, \"message\": \"Username is available\"}");
+        }
     }
 } 

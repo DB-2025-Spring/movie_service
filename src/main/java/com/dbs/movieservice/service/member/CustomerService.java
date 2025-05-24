@@ -24,6 +24,7 @@ public class CustomerService {
 
     @Transactional
     public Customer registerCustomer(SignupRequest signupRequest) {
+        // 아이디 중복 체크
         if (customerRepository.existsByCustomerInputId(signupRequest.getCustomerInputId())) {
             throw new RuntimeException("Username is already taken!");
         }
@@ -44,23 +45,9 @@ public class CustomerService {
         
         return customerRepository.save(customer);
     }
-
-    @Transactional
-    public Customer registerCustomer(Customer customer, ClientLevel defaultLevel) {
-        if (customerRepository.existsByCustomerInputId(customer.getCustomerInputId())) {
-            throw new RuntimeException("Username is already taken!");
-        }
-
-        // Set default values
-        customer.setAuthority(Role.ROLE_GUEST.getCode()); // Default role is GUEST
-        customer.setJoinDate(LocalDate.now());
-        customer.setPoints(0);
-        customer.setLevel(defaultLevel);
-        
-        // Encode password
-        customer.setCustomerPw(passwordEncoder.encode(customer.getCustomerPw()));
-        
-        return customerRepository.save(customer);
+    
+    public boolean checkDuplicateCustomerId(String customerInputId) {
+        return customerRepository.existsByCustomerInputId(customerInputId);
     }
     
     @Transactional
@@ -78,24 +65,4 @@ public class CustomerService {
         return customer;
     }
 
-    @Transactional
-    public Customer upgradeToMember(String customerInputId) {
-        Customer customer = customerRepository.findByCustomerInputId(customerInputId)
-                .orElseThrow(() -> new RuntimeException("Customer not found with ID: " + customerInputId));
-        
-        // Change authority to MEMBER
-        customer.setAuthority(Role.ROLE_MEMBER.getCode());
-        
-        return customerRepository.save(customer);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<Customer> findByCustomerInputId(String customerInputId) {
-        return customerRepository.findByCustomerInputId(customerInputId);
-    }
-
-    @Transactional(readOnly = true)
-    public boolean existsByCustomerInputId(String customerInputId) {
-        return customerRepository.existsByCustomerInputId(customerInputId);
-    }
 } 
