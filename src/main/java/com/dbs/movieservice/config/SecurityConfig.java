@@ -29,6 +29,9 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    /**
+     * 인증 필터 설정
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -57,6 +60,9 @@ public class SecurityConfig {
         return http.build();
     }
     
+    /**
+     * 익명 사용자에게 GUEST 역할 부여
+     */
     private UserDetails createAnonymousUser() {
         return new User(
             "anonymousUser", 
@@ -65,11 +71,17 @@ public class SecurityConfig {
         );
     }
 
+    /**
+     * 비밀번호 해시화.
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * 인증 매니저 빈 등록
+     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
             throws Exception {
