@@ -25,4 +25,6 @@ public class TheaterService {
     public Optional<Theater> getTheaterById(Long id) {
         return theaterRepository.findById(id);
     }
+
+
 }

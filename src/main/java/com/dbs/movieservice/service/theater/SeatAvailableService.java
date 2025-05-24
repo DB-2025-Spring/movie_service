@@ -10,6 +10,8 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class SeatAvailableService {
@@ -43,5 +45,15 @@ public class SeatAvailableService {
         }).toList();
 
         seatAvailableRepository.saveAll(seatAvailableList);
+    }
+
+    public Map<Long, Long> countAvailableSeatMap(List<Long> scheduleIds) {
+        List<Object[]> results = seatAvailableRepository.countAvailableSeatsByScheduleIds(scheduleIds);
+
+        return results.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
     }
 }

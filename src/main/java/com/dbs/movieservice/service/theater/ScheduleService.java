@@ -5,6 +5,7 @@ import com.dbs.movieservice.domain.theater.Schedule;
 import com.dbs.movieservice.domain.theater.Theater;
 import com.dbs.movieservice.repository.movie.MovieRepository;
 import com.dbs.movieservice.repository.theater.ScheduleRepository;
+import com.dbs.movieservice.repository.theater.SeatAvailableRepository;
 import com.dbs.movieservice.repository.theater.SeatRepository;
 import com.dbs.movieservice.repository.theater.TheaterRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ScheduleService {
@@ -73,4 +76,19 @@ public class ScheduleService {
         return cSchedule;
     }
 
+    //시험삼아 Dto로 정의. cgv를 보니, 해당날자 기준, 방영한 영화를 포함해서 다 조회하기에, 금일 기준으로 조회하게 정의했습니다.
+    public List<Schedule> getSchedulesForNext7Days(Long movieId) {
+        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfTargetDay = startOfToday.plusDays(7);
+
+        return scheduleRepository.findSchedulesForNext7Days(movieId, startOfToday, endOfTargetDay);
+    }
+
+    public Map<Long,Long> getSchedulesFor1Day(LocalDate selectedDate) {
+        List<Schedule> schedulesList =scheduleRepository.findSchedulesByDate(selectedDate);
+        List<Long> scheduleId =  schedulesList.stream().map(Schedule::getScheduleId).toList();
+        return seatAvailableService.countAvailableSeatMap(scheduleId);
+    }
 }
+
+
