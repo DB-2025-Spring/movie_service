@@ -60,4 +60,11 @@ public class SeatAvailableService {
     public List<SeatAvailable> getAvailableSeatForSchedule(Schedule schedule) {
         return seatAvailableRepository.findByScheduleId(schedule.getScheduleId());
     }
+
+    public Boolean isAvailableForTicket(Schedule schedule, List<Seat> seats) {
+        Long scheduleId = schedule.getScheduleId();
+        int seatCount = seats.size();
+        List<Long>seatsId = seats.stream().map(Seat::getSeatId).toList();
+        return seatCount == seatAvailableRepository.countAvailableSeat(scheduleId, seatsId);
+    }
 }
