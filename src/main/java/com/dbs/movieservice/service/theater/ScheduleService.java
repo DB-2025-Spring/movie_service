@@ -89,6 +89,8 @@ public class ScheduleService {
         List<Long> scheduleId =  schedulesList.stream().map(Schedule::getScheduleId).toList();
         return seatAvailableService.countAvailableSeatMap(scheduleId);
     }
+
+//    public Map<>
 }
 
 

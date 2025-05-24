@@ -56,4 +56,8 @@ public class SeatAvailableService {
                         row -> (Long) row[1]
                 ));
     }
+
+    public List<SeatAvailable> getAvailableSeatForSchedule(Schedule schedule) {
+        return seatAvailableRepository.findByScheduleId(schedule.getScheduleId());
+    }
 }

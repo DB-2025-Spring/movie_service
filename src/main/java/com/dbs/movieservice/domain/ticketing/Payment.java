@@ -22,10 +22,6 @@ public class Payment {
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ticket_id", nullable = false)
-    private Ticket ticket;
-
     @Column(name = "payment_amount", nullable = false)
     private Integer paymentAmount;
 
@@ -44,6 +40,6 @@ public class Payment {
     @Column(name = "discount_amount")
     private Integer discountAmount;
 
-    @Column(name = "used_points", length = 18)
-    private String usedPoints;
+    @Column(name = "used_points")
+    private Integer usedPoints;
 }
