@@ -9,7 +9,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @Entity
-
+@Table(name="seat")
 public class Seat {
     @Id
     @SequenceGenerator(name = "seat_seq", sequenceName = "seat_seq", allocationSize = 1)

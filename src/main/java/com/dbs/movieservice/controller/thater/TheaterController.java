@@ -19,8 +19,8 @@ public class TheaterController {
     @GetMapping("/test-create")
     public Theater createTestTheater() {
         Theater theater = new Theater();
-        theater.setTheater_name("테스트관");
-        theater.setTotal_seats(123);
+        theater.setTheaterName("테스트관");
+        theater.setTotalSeats(123);
 
         return theaterService.createTheater(theater);
     }
