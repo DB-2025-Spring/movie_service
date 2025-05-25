@@ -27,4 +27,6 @@ public class SeatService {
         theater.setTotalSeats(theater.getTotalSeats() + 1); //save를 따로 호출 하지 않는 이유는, 이미 영속 상태 객체이기 떄문에 할 필요없음.
         return seat;
     }
+
+    //todo: Seat update? Seat 삭제?...
 }

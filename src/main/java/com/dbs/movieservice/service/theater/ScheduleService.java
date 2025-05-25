@@ -76,7 +76,7 @@ public class ScheduleService {
         return cSchedule;
     }
 
-    //시험삼아 Dto로 정의. cgv를 보니, 해당날자 기준, 방영한 영화를 포함해서 다 조회하기에, 금일 기준으로 조회하게 정의했습니다.
+
     public List<Schedule> getSchedulesForNext7Days(Long movieId) {
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
         LocalDateTime endOfTargetDay = startOfToday.plusDays(7);
@@ -90,7 +90,7 @@ public class ScheduleService {
         return seatAvailableService.countAvailableSeatMap(scheduleId);
     }
 
-//    public Map<>
+    //todo: 티켓과 결제를 확인하고 삭제/업데이트
 }
 
 

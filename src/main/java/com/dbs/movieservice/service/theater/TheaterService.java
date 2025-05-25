@@ -26,5 +26,5 @@ public class TheaterService {
         return theaterRepository.findById(id);
     }
 
-
+    //todo theater Update(좌석 추가는 구현되어있음. 이름수정 update 구현)
 }

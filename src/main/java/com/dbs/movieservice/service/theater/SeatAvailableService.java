@@ -80,4 +80,5 @@ public class SeatAvailableService {
 
         return seat.size()==seatAvailableRepository.updateIsBook(updateType, scheduleId, seatsId);
     }
+
 }
