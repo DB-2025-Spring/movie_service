@@ -10,6 +10,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -52,5 +53,10 @@ public class TicketService {
     }
 
     //todo: 티켓과 결제를 확인하고 삭제/업데이트
-
+    @Transactional
+    public void deleteTicket(List<Ticket> tickets) {
+        List<Seat> seats = tickets.stream().map(Ticket::getSeat).toList();
+        seatAvailableService.updateAvailableSeat(tickets.get(0).getSchedule(),seats,"f");
+        ticketRepository.deleteAll(tickets);
+    }
 }
