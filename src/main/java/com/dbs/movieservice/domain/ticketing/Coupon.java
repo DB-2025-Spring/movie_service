@@ -12,6 +12,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @ToString
+@Table(name="coupon")
 public class Coupon {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "coupon_seq")

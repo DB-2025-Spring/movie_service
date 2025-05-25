@@ -10,6 +10,7 @@ import lombok.ToString;
 @Setter
 @Entity
 @ToString
+@Table(name="theater")
 public class Theater {
     @Id
     @SequenceGenerator(name = "theater_seq", sequenceName = "theater_seq", allocationSize = 1)
@@ -20,6 +21,6 @@ public class Theater {
     @Column(name = "theater_name", nullable = false, length = 100)
     private String theaterName;
     
-    @Column(name = "total_seats")
+    @Column(name = "total_seats", nullable = false)
     private Integer totalSeats;
 }
