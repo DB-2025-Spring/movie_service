@@ -29,4 +29,8 @@ public class SeatService {
     }
 
     //todo: Seat update? Seat 삭제?...
+    @Transactional
+    public Seat updateSeat(Seat seat) {
+        return seatRepository.save(seat);
+    }
 }
