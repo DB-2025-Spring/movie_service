@@ -27,4 +27,7 @@ public class TheaterService {
     }
 
     //todo theater Update(좌석 추가는 구현되어있음. 이름수정 update 구현)
+    public Theater updateTheater(Theater theater) {
+        return theaterRepository.save(theater);
+    }
 }
