@@ -6,7 +6,8 @@ import com.dbs.movieservice.domain.theater.SeatAvailable;
 import com.dbs.movieservice.repository.theater.ScheduleRepository;
 import com.dbs.movieservice.repository.theater.SeatAvailableRepository;
 import com.dbs.movieservice.repository.theater.SeatRepository;
-import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.LockTimeoutException;
+import jakarta.persistence.PessimisticLockException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -65,6 +66,18 @@ public class SeatAvailableService {
         Long scheduleId = schedule.getScheduleId();
         int seatCount = seats.size();
         List<Long>seatsId = seats.stream().map(Seat::getSeatId).toList();
-        return seatCount == seatAvailableRepository.countAvailableSeat(scheduleId, seatsId);
+//        return seatCount == seatAvailableRepository.countAvailableSeat(scheduleId, seatsId);
+        try{
+            return seatCount == seatAvailableRepository.countAvailableSeat(scheduleId, seatsId);
+        }catch(PessimisticLockException | LockTimeoutException e) {
+            return false;
+        }
+    }
+
+    public Boolean updateAvailableSeat(Schedule schedule, List<Seat> seat, String updateType) {
+        Long scheduleId = schedule.getScheduleId();
+        List<Long>seatsId = seat.stream().map(Seat::getSeatId).toList();
+
+        return seat.size()==seatAvailableRepository.updateIsBook(updateType, scheduleId, seatsId);
     }
 }

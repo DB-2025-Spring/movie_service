@@ -3,10 +3,7 @@ package com.dbs.movieservice.repository.theater;
 import com.dbs.movieservice.domain.theater.SeatAvailable;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.jpa.repository.QueryHints;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
@@ -29,4 +26,9 @@ public interface SeatAvailableRepository extends JpaRepository<SeatAvailable, Se
     })
     @Query("Select Count(sa) From SeatAvailable sa Where sa.id.scheduleId=:scheduleId and sa.id.seatId In :seatsId and sa.isBooked='f'")
     long countAvailableSeat(@Param("scheduleId") Long scheduleId, @Param("seatsId") List<Long> seatsId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("Update SeatAvailable sa Set sa.isBooked =:updateType Where sa.id.scheduleId=:scheduleId and sa.id.seatId In :seatsId")
+    int updateIsBook(@Param("updateType")String updateType, @Param("scheduleId")Long scheduleId, @Param("seatsId")List<Long> seatsId);
+
 }
