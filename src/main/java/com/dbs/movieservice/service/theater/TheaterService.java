@@ -6,6 +6,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -29,5 +30,8 @@ public class TheaterService {
     //todo theater Update(좌석 추가는 구현되어있음. 이름수정 update 구현)
     public Theater updateTheater(Theater theater) {
         return theaterRepository.save(theater);
+    }
+    public List<Theater> getAllTheaters(){
+        return theaterRepository.findAll();
     }
 }
