@@ -27,7 +27,7 @@ public class TheaterService {
         return theaterRepository.findById(id);
     }
 
-    //todo theater Update(좌석 추가는 구현되어있음. 이름수정 update 구현)
+    //todo theater delete - domain을 @Where(clause = "is_deleted = false")사용으로 수정?
     public Theater updateTheater(Theater theater) {
         return theaterRepository.save(theater);
     }

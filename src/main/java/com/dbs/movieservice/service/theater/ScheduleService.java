@@ -90,7 +90,8 @@ public class ScheduleService {
         return seatAvailableService.countAvailableSeatMap(scheduleId);
     }
 
-    //todo: 티켓과 결제를 확인하고 삭제/업데이트
+
+
 }
 
 
