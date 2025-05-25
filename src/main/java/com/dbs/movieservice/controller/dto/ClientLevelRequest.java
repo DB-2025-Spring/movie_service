@@ -13,6 +13,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ClientLevelRequest {
     
+    @NotNull
+    @Positive
+    private Integer levelId;
+    
     @NotBlank
     @Size(min = 1, max = 50)
     private String levelName;

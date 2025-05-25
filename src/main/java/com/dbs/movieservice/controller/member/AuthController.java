@@ -1,18 +1,24 @@
 package com.dbs.movieservice.controller.member;
 
+import com.dbs.movieservice.config.AdminProperties;
 import com.dbs.movieservice.config.JwtUtils;
 import com.dbs.movieservice.controller.dto.AuthRequest;
 import com.dbs.movieservice.controller.dto.AuthResponse;
 import com.dbs.movieservice.controller.dto.SignupRequest;
 import com.dbs.movieservice.domain.member.Role;
 import com.dbs.movieservice.service.member.CustomerService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,17 +26,79 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.Collections;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final CustomerService customerService;
     private final JwtUtils jwtUtils;
+    private final AdminProperties adminProperties;
+    private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateCustomer(@Valid @RequestBody AuthRequest loginRequest) {
+    public ResponseEntity<?> authenticateCustomer(@Valid @RequestBody AuthRequest loginRequest, 
+                                                 HttpServletRequest request) {
+        
+        // 1. 관리자 계정 확인
+        if (isAdminAccount(loginRequest)) {
+            return handleAdminLogin(loginRequest, request);
+        }
+        
+        // 2. 일반 사용자 로그인 처리
+        return handleUserLogin(loginRequest);
+    }
+    
+    /**
+     * 관리자 계정인지 확인
+     */
+    private boolean isAdminAccount(AuthRequest loginRequest) {
+        return adminProperties.isEnabled() && 
+               adminProperties.getUsername().equals(loginRequest.getCustomerInputId());
+    }
+    
+    /**
+     * 관리자 로그인 처리
+     */
+    private ResponseEntity<?> handleAdminLogin(AuthRequest loginRequest, HttpServletRequest request) {
+        // 관리자 비밀번호 검증 (단순 문자열 비교)
+        if (!adminProperties.getPassword().equals(loginRequest.getCustomerPw())) {
+            log.warn("Admin login failed - Invalid password for user: {} from IP: {}", 
+                    loginRequest.getCustomerInputId(), getClientIP(request));
+            return ResponseEntity.status(401).body("Invalid credentials");
+        }
+        
+        // 관리자 인증 객체 생성
+        User adminUser = new User(
+            adminProperties.getUsername(),
+            passwordEncoder.encode(adminProperties.getPassword()),
+            Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN"))
+        );
+        
+        Authentication adminAuth = new UsernamePasswordAuthenticationToken(
+            adminUser, null, adminUser.getAuthorities()
+        );
+        
+        SecurityContextHolder.getContext().setAuthentication(adminAuth);
+        
+        // JWT 토큰 생성
+        String jwt = jwtUtils.generateToken(adminAuth);
+        
+        // 관리자 로그인 로그
+        log.info("Admin login successful for user: {} from IP: {}", 
+                loginRequest.getCustomerInputId(), getClientIP(request));
+        
+        return ResponseEntity.ok(new AuthResponse(jwt, adminUser.getUsername(), "ADMIN"));
+    }
+    
+    /**
+     * 일반 사용자 로그인 처리
+     */
+    private ResponseEntity<?> handleUserLogin(AuthRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getCustomerInputId(),
@@ -65,6 +133,17 @@ public class AuthController {
                 .orElse(Role.ROLE_GUEST.getCode());
 
         return ResponseEntity.ok(new AuthResponse(jwt, userDetails.getUsername(), authority));
+    }
+    
+    /**
+     * 클라이언트 IP 주소 추출
+     */
+    private String getClientIP(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
     @PostMapping("/signup")

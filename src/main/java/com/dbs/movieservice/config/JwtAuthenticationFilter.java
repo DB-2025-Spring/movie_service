@@ -27,8 +27,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // JWT 인증이 필요 없는 URL 패턴 목록
     private final List<String> excludeUrlPatterns = Arrays.asList(
             "/api/auth/**",
-            "/api/movies",
-            "/api/movies/*/details",
             "/test"
     );
 

@@ -39,13 +39,10 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
-                .requestMatchers("/api/auth/**", "/api/movies", "/api/movies/*/details", "/test").permitAll()
+                .requestMatchers("/api/auth/**", "/test").permitAll()
                 
                 // Admin-only endpoints
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                
-                // Member and Admin endpoints
-                .requestMatchers("/api/bookings/**").hasAnyRole("MEMBER", "ADMIN")
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 
                 // Authenticated user endpoints
                 .anyRequest().authenticated()
