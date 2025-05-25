@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.Collections;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 @Slf4j
 public class AuthController {

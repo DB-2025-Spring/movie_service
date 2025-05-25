@@ -26,7 +26,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     
     // JWT 인증이 필요 없는 URL 패턴 목록
     private final List<String> excludeUrlPatterns = Arrays.asList(
-            "/api/auth/**",
+            "/auth/**",
             "/test"
     );
 
@@ -38,6 +38,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 
+    /**
+     * JWT 토큰 검증
+     * 토큰이 유효하면 인증 객체를 생성하여 보안 컨텍스트에 저장
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
