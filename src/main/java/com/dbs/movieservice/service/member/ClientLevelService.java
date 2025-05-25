@@ -54,4 +54,15 @@ public class ClientLevelService {
         
         return clientLevelRepository.save(clientLevel);
     }
+
+    /**
+     * 고객 등급 삭제
+     */
+    @Transactional
+    public void deleteLevel(Integer levelId) {
+        if (!clientLevelRepository.existsById(levelId)) {
+            throw new RuntimeException("등급을 찾을 수 없습니다: " + levelId);
+        }
+        clientLevelRepository.deleteById(levelId);
+    }
 } 

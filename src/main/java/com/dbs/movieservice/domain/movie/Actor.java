@@ -13,8 +13,8 @@ public class Actor {
     @SequenceGenerator(name="actor_seq", sequenceName = "actor_seq", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator="actor_seq")
     @Column(name="actor_id")
-    private Long actorID;
+    private Long actorId;
 
-    @Column(length = 50, name="actor_name")
+    @Column(name="actor_name", length = 50)
     private String actorName;
 }
