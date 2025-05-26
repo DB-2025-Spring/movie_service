@@ -6,7 +6,9 @@ import com.dbs.movieservice.domain.theater.SeatAvailable;
 import com.dbs.movieservice.repository.theater.ScheduleRepository;
 import com.dbs.movieservice.repository.theater.SeatAvailableRepository;
 import com.dbs.movieservice.repository.theater.SeatRepository;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockTimeoutException;
+import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.PessimisticLockException;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +18,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class SeatAvailableService {
+//    @PersistenceContext
+//    private EntityManager entityManager;
     private final SeatRepository seatRepository;
     private final SeatAvailableRepository seatAvailableRepository;
 
@@ -47,6 +51,30 @@ public class SeatAvailableService {
 
         seatAvailableRepository.saveAll(seatAvailableList);
     }
+
+//    public void createSeatAvailableForSchedule(Schedule schedule) {
+//        List<Seat> seats = seatRepository.findByTheater_TheaterId(schedule.getTheater().getTheaterId());
+//
+//        int batchSize = 50;
+//        for (int i = 0; i < seats.size(); i++) {
+//            Seat seat = seats.get(i);
+//            SeatAvailable seatAvailable = new SeatAvailable();
+//            seatAvailable.setId(new SeatAvailable.SeatAvailableId(schedule.getScheduleId(), seat.getSeatId()));
+//            seatAvailable.setSchedule(schedule);
+//            seatAvailable.setSeat(seat);
+//            seatAvailable.setIsBooked("f");
+//
+//            entityManager.persist(seatAvailable);
+//
+//            if (i > 0 && i % batchSize == 0) {
+//                entityManager.flush();
+//                entityManager.clear();
+//            }
+//        }
+//
+//        entityManager.flush();
+//        entityManager.clear();
+//    }
 
     public Map<Long, Long> countAvailableSeatMap(List<Long> scheduleIds) {
         List<Object[]> results = seatAvailableRepository.countAvailableSeatsByScheduleIds(scheduleIds);

@@ -53,7 +53,7 @@ public class TicketService {
     }
 
     //todo: 티켓과 결제를 확인하고 삭제/업데이트
-    @Transactional
+    //이 함수는 payment에서 호출 될 함수이기에 transaction을 선언안함.
     public void deleteTicket(List<Ticket> tickets) {
         List<Seat> seats = tickets.stream().map(Ticket::getSeat).toList();
         seatAvailableService.updateAvailableSeat(tickets.get(0).getSchedule(),seats,"f");
