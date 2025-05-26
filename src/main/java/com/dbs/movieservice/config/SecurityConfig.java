@@ -12,6 +12,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
+                        // Swagger UI 관련 경로 허용
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().permitAll()  // ✅ 모든 요청 허용
                 )
                 .csrf(csrf -> csrf.disable()) // ✅ CSRF 비활성화
