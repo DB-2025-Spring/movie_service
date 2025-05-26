@@ -9,7 +9,7 @@ import com.dbs.movieservice.repository.theater.SeatAvailableRepository;
 import com.dbs.movieservice.repository.theater.SeatRepository;
 import com.dbs.movieservice.repository.theater.TheaterRepository;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class ScheduleService {
@@ -96,7 +95,7 @@ public class ScheduleService {
     /**
      * 모든 상영일정 조회
      */
-    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public List<Schedule> findAllSchedules() {
         return scheduleRepository.findAll();
     }
@@ -104,7 +103,7 @@ public class ScheduleService {
     /**
      * ID로 상영일정 조회
      */
-    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public Optional<Schedule> findScheduleById(Long scheduleId) {
         return scheduleRepository.findById(scheduleId);
     }
@@ -112,7 +111,7 @@ public class ScheduleService {
     /**
      * 상영일정 저장 (Admin용)
      */
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public Schedule saveSchedule(Long movieId, Long theaterId, LocalDate scheduleDate, 
                                Integer scheduleSequence, LocalDateTime scheduleStartTime) {
         Movie movie = movieRepository.findById(movieId)
@@ -139,7 +138,7 @@ public class ScheduleService {
     /**
      * 상영일정 수정
      */
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public Schedule updateSchedule(Long scheduleId, Long movieId, Long theaterId, 
                                  LocalDate scheduleDate, Integer scheduleSequence, 
                                  LocalDateTime scheduleStartTime) {
@@ -167,7 +166,7 @@ public class ScheduleService {
     /**
      * 상영일정 삭제
      */
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public void deleteSchedule(Long scheduleId) {
         if (!scheduleRepository.existsById(scheduleId)) {
             throw new RuntimeException("상영일정을 찾을 수 없습니다: " + scheduleId);
