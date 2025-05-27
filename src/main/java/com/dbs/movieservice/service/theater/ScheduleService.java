@@ -9,14 +9,14 @@ import com.dbs.movieservice.repository.theater.SeatAvailableRepository;
 import com.dbs.movieservice.repository.theater.SeatRepository;
 import com.dbs.movieservice.repository.theater.TheaterRepository;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 public class ScheduleService {
@@ -76,7 +76,7 @@ public class ScheduleService {
         return cSchedule;
     }
 
-
+    //시험삼아 Dto로 정의. cgv를 보니, 해당날자 기준, 방영한 영화를 포함해서 다 조회하기에, 금일 기준으로 조회하게 정의했습니다.
     public List<Schedule> getSchedulesForNext7Days(Long movieId) {
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
         LocalDateTime endOfTargetDay = startOfToday.plusDays(7);
@@ -90,8 +90,89 @@ public class ScheduleService {
         return seatAvailableService.countAvailableSeatMap(scheduleId);
     }
 
+    // ========== Admin용 추가 메서드들 ==========
 
+    /**
+     * 모든 상영일정 조회
+     */
+    @Transactional(readOnly = true)
+    public List<Schedule> findAllSchedules() {
+        return scheduleRepository.findAll();
+    }
 
+    /**
+     * ID로 상영일정 조회
+     */
+    @Transactional(readOnly = true)
+    public Optional<Schedule> findScheduleById(Long scheduleId) {
+        return scheduleRepository.findById(scheduleId);
+    }
+
+    /**
+     * 상영일정 저장 (Admin용)
+     */
+    @Transactional
+    public Schedule saveSchedule(Long movieId, Long theaterId, LocalDate scheduleDate, 
+                               Integer scheduleSequence, LocalDateTime scheduleStartTime) {
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new RuntimeException("영화를 찾을 수 없습니다: " + movieId));
+        
+        Theater theater = theaterRepository.findById(theaterId)
+                .orElseThrow(() -> new RuntimeException("상영관을 찾을 수 없습니다: " + theaterId));
+        
+        Schedule schedule = new Schedule();
+        schedule.setMovie(movie);
+        schedule.setTheater(theater);
+        schedule.setScheduleDate(scheduleDate);
+        schedule.setScheduleSequence(scheduleSequence);
+        schedule.setScheduleStartTime(scheduleStartTime);
+        // endTime 계산
+        LocalDateTime endTime = scheduleStartTime.plusMinutes(movie.getRunningTime());
+        schedule.setScheduleEndTime(endTime);
+        
+        Schedule savedSchedule = scheduleRepository.save(schedule);
+        seatAvailableService.createSeatAvailableForSchedule(savedSchedule);
+        return savedSchedule;
+    }
+
+    /**
+     * 상영일정 수정
+     */
+    @Transactional
+    public Schedule updateSchedule(Long scheduleId, Long movieId, Long theaterId, 
+                                 LocalDate scheduleDate, Integer scheduleSequence, 
+                                 LocalDateTime scheduleStartTime) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new RuntimeException("상영일정을 찾을 수 없습니다: " + scheduleId));
+        
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new RuntimeException("영화를 찾을 수 없습니다: " + movieId));
+        
+        Theater theater = theaterRepository.findById(theaterId)
+                .orElseThrow(() -> new RuntimeException("상영관을 찾을 수 없습니다: " + theaterId));
+        
+        schedule.setMovie(movie);
+        schedule.setTheater(theater);
+        schedule.setScheduleDate(scheduleDate);
+        schedule.setScheduleSequence(scheduleSequence);
+        schedule.setScheduleStartTime(scheduleStartTime);
+        // endTime 계산
+        LocalDateTime endTime = scheduleStartTime.plusMinutes(movie.getRunningTime());
+        schedule.setScheduleEndTime(endTime);
+        
+        return scheduleRepository.save(schedule);
+    }
+
+    /**
+     * 상영일정 삭제
+     */
+    @Transactional
+    public void deleteSchedule(Long scheduleId) {
+        if (!scheduleRepository.existsById(scheduleId)) {
+            throw new RuntimeException("상영일정을 찾을 수 없습니다: " + scheduleId);
+        }
+        scheduleRepository.deleteById(scheduleId);
+    }
 }
 
 

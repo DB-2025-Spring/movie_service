@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
@@ -13,8 +16,14 @@ public class Actor {
     @SequenceGenerator(name="actor_seq", sequenceName = "actor_seq", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator="actor_seq")
     @Column(name="actor_id")
-    private Long actorID;
+    private Long actorId;
 
-    @Column(length = 50, name="actor_name")
+    @Column(name="actor_name", length = 50)
     private String actorName;
+/*
+
+    @OneToMany(mappedBy = "actor", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieActor> movieActors = new ArrayList<>();
+*/
+
 }
