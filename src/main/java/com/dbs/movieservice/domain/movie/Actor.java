@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
@@ -17,4 +20,10 @@ public class Actor {
 
     @Column(length = 50, name="actor_name")
     private String actorName;
+/*
+
+    @OneToMany(mappedBy = "actor", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieActor> movieActors = new ArrayList<>();
+*/
+
 }
