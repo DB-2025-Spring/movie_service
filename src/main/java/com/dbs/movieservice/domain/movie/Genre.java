@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @Setter
@@ -17,4 +20,9 @@ public class Genre {
     private Long genreId;
     @Column(length = 100, name="genre_name")
     private String genreName;
+
+/*
+    @OneToMany(mappedBy = "genre", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MovieGenre> movieGenres = new ArrayList<>();
+*/
 }
