@@ -7,8 +7,8 @@ import java.util.List;
 
 public interface MovieActorRepository extends JpaRepository<MovieActor, MovieActor.MovieActorId> {
     // 영화별 배우 조회
-    List<MovieActor> findByMovie_MovieId(Long movieId);
+//    List<MovieActor> findByMovie_MovieId(Long movieId);
 
     // 배우별 영화 조회
-    List<MovieActor> findByActor_ActorID(Long actorId);
+//    List<MovieActor> findByActor_ActorID(Long actorId);
 }
