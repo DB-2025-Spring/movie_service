@@ -32,6 +32,13 @@ public class TheaterService {
         return theaterRepository.findById(id);
     }
 
+    //todo theater delete - domain을 @Where(clause = "is_deleted = false")사용으로 수정?
+    public Theater updateTheater(Theater theater) {
+        return theaterRepository.save(theater);
+    }
+    public List<Theater> getAllTheaters(){
+        return theaterRepository.findAll();
+    }
     // ========== Admin용 추가 메서드들 ==========
 
     /**
@@ -65,10 +72,10 @@ public class TheaterService {
     public Theater updateTheater(Long theaterId, String theaterName, Integer totalSeats) {
         Theater theater = theaterRepository.findById(theaterId)
                 .orElseThrow(() -> new RuntimeException("상영관을 찾을 수 없습니다: " + theaterId));
-        
+
         theater.setTheaterName(theaterName);
         theater.setTotalSeats(totalSeats);
-        
+
         return theaterRepository.save(theater);
     }
 
