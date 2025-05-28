@@ -3,6 +3,7 @@ package com.dbs.movieservice.service.ticketing;
 import com.dbs.movieservice.domain.member.Customer;
 import com.dbs.movieservice.domain.theater.Schedule;
 import com.dbs.movieservice.domain.theater.Seat;
+import com.dbs.movieservice.domain.ticketing.Payment;
 import com.dbs.movieservice.domain.ticketing.Ticket;
 import com.dbs.movieservice.repository.ticketing.TicketRepository;
 import com.dbs.movieservice.service.theater.SeatAvailableService;
@@ -51,6 +52,16 @@ public class TicketService {
         };
         return true;
     }
+
+    public void confirmPaymentForTicket(List<Ticket> tickets, Payment payment){
+        tickets.forEach(ticket->{
+            ticket.setPayment(payment);
+            seatAvailableService.updateAvailableSeat(ticket.getSchedule(), List.of(ticket.getSeat()),"F");
+        });
+        ticketRepository.saveAll(tickets);
+    }
+
+
 
     //todo: 티켓과 결제를 확인하고 삭제/업데이트
     //이 함수는 payment에서 호출 될 함수이기에 transaction을 선언안함.

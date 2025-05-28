@@ -1,5 +1,6 @@
 package com.dbs.movieservice.domain.ticketing;
 
+import com.dbs.movieservice.domain.member.Card;
 import com.dbs.movieservice.domain.member.Customer;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -42,4 +43,8 @@ public class Payment {
 
     @Column(name = "used_points")
     private Integer usedPoints;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "card_id", referencedColumnName = "card_id")
+    private Card card;
 }
