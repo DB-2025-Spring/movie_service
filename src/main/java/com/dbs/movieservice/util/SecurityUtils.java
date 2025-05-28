@@ -1,15 +1,10 @@
 package com.dbs.movieservice.util;
 
+import com.dbs.movieservice.domain.member.Role;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class SecurityUtils {
@@ -36,20 +31,30 @@ public class SecurityUtils {
     }
 
     /**
-     * 현재 로그인한 사용자의 권한 목록을 가져옵니다.
+     * 현재 로그인한 사용자의 권한을 가져옵니다.
      * 
-     * @return List<String> 권한 목록
+     * @return Role 사용자 권한 (ROLE_ADMIN, ROLE_MEMBER, ROLE_GUEST)
+     * @throws RuntimeException 인증되지 않았거나 권한이 없는 경우
      */
-    public static List<String> getCurrentUserAuthorities() {
+    public static Role getCurrentUserRole() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         
         if (authentication == null || !authentication.isAuthenticated()) {
-            return List.of();
+            throw new RuntimeException("User not authenticated");
         }
         
-        return authentication.getAuthorities().stream()
+        String authority = authentication.getAuthorities().stream()
+                .findFirst()
                 .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
+                .orElseThrow(() -> new RuntimeException("No authority found"));
+        
+        // authority는 "ROLE_ADMIN", "ROLE_MEMBER", "ROLE_GUEST" 형식
+        try {
+            return Role.valueOf(authority);
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown authority: {}, defaulting to ROLE_GUEST", authority);
+            return Role.ROLE_GUEST;
+        }
     }
 
     /**
