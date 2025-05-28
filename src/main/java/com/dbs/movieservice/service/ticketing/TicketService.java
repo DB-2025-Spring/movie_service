@@ -61,13 +61,16 @@ public class TicketService {
         ticketRepository.saveAll(tickets);
     }
 
-
-
     //todo: 티켓과 결제를 확인하고 삭제/업데이트
     //이 함수는 payment에서 호출 될 함수이기에 transaction을 선언안함.
-    public void deleteTicket(List<Ticket> tickets) {
+    public void deleteTicket(Payment payment) {
+        List<Ticket> tickets = ticketRepository.findByPayment(payment);
         List<Seat> seats = tickets.stream().map(Ticket::getSeat).toList();
         seatAvailableService.updateAvailableSeat(tickets.get(0).getSchedule(),seats,"f");
         ticketRepository.deleteAll(tickets);
+    }
+
+    public int countCustomerTicket(Payment payment) {
+        return ticketRepository.countByPayment(payment);
     }
 }
