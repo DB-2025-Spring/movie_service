@@ -7,6 +7,8 @@ import com.dbs.movieservice.controller.dto.AuthResponse;
 import com.dbs.movieservice.controller.dto.SignupRequest;
 import com.dbs.movieservice.domain.member.Role;
 import com.dbs.movieservice.service.member.CustomerService;
+import com.dbs.movieservice.service.member.BirthdayCouponService;
+import com.dbs.movieservice.service.member.SignupCouponService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -50,6 +52,8 @@ public class AuthController {
     private final JwtUtils jwtUtils;
     private final AdminProperties adminProperties;
     private final PasswordEncoder passwordEncoder;
+    private final BirthdayCouponService birthdayCouponService;
+    private final SignupCouponService signupCouponService;
 
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "사용자 또는 관리자 로그인을 처리합니다.")
@@ -170,6 +174,18 @@ public class AuthController {
                 })
                 .orElse(Role.ROLE_GUEST.getCode());
 
+        // 로그인 성공 후 생일 쿠폰 발급 체크
+        try {
+            boolean birthdayCouponIssued = birthdayCouponService.issueBirthdayCouponIfEligible(loginRequest.getCustomerInputId());
+            if (birthdayCouponIssued) {
+                log.info("Birthday coupon issued during login for user: {}", loginRequest.getCustomerInputId());
+            }
+        } catch (Exception e) {
+            log.warn("Failed to check/issue birthday coupon during login for user: {}", 
+                    loginRequest.getCustomerInputId(), e);
+            // 생일 쿠폰 발급 실패는 로그인 실패로 처리하지 않음
+        }
+
         return ResponseEntity.ok(new AuthResponse(jwt, userDetails.getUsername(), authority));
     }
     
@@ -200,6 +216,19 @@ public class AuthController {
         try {
             // DTO를 서비스 계층에 전달하여 Customer 생성 및 저장 로직을 처리
             customerService.registerCustomer(signupRequest);
+            
+            // 회원가입 성공 후 신규가입쿠폰 발급
+            try {
+                boolean signupCouponIssued = signupCouponService.issueSignupCoupon(signupRequest.getCustomerInputId());
+                if (signupCouponIssued) {
+                    log.info("Signup coupon issued for new user: {}", signupRequest.getCustomerInputId());
+                }
+            } catch (Exception e) {
+                log.warn("Failed to issue signup coupon for new user: {}", 
+                        signupRequest.getCustomerInputId(), e);
+                // 신규가입쿠폰 발급 실패는 회원가입 실패로 처리하지 않음
+            }
+            
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body("User registered successfully!");
         } catch (RuntimeException e) {
