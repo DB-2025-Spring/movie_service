@@ -17,6 +17,8 @@ import com.dbs.movieservice.service.theater.ScheduleService;
 import com.dbs.movieservice.service.theater.SeatService;
 import com.dbs.movieservice.service.theater.TheaterService;
 import com.dbs.movieservice.service.ticketing.CouponService;
+import com.dbs.movieservice.service.member.IssueCouponService;
+import com.dbs.movieservice.controller.dto.IssuedCouponResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -31,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
@@ -51,6 +54,7 @@ public class AdminController {
     private final ScheduleService scheduleService;
     private final CouponService couponService;
     private final ClientLevelService clientLevelService;
+    private final IssueCouponService issueCouponService;
 
     // 영화 관리
     
@@ -583,5 +587,105 @@ public class AdminController {
             @Parameter(description = "등급 ID", example = "1", required = true) @PathVariable Integer levelId) {
         clientLevelService.deleteLevel(levelId);
         return ResponseEntity.noContent().build();
+    }
+
+    // 쿠폰 발급 관리
+
+    @PostMapping("/issue-coupon/{customerInputId}/{couponId}")
+    @Operation(summary = "특정 고객에게 쿠폰 발급", description = "관리자가 특정 고객에게 특정 쿠폰을 발급합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "쿠폰 발급 성공",
+                content = @Content(schema = @Schema(implementation = IssuedCouponResponse.class))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 (이미 발급된 쿠폰 등)"),
+        @ApiResponse(responseCode = "404", description = "고객 또는 쿠폰을 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<?> issueCouponToCustomer(
+            @Parameter(description = "고객 입력 ID", example = "testuser123", required = true) 
+            @PathVariable String customerInputId,
+            @Parameter(description = "쿠폰 ID", example = "1", required = true) 
+            @PathVariable Long couponId) {
+        try {
+            IssuedCouponResponse issuedCoupon = issueCouponService.issueCouponToCustomer(customerInputId, couponId);
+            
+            log.info("Admin issued coupon {} to customer: {}", couponId, customerInputId);
+            return ResponseEntity.status(HttpStatus.CREATED).body(issuedCoupon);
+            
+        } catch (RuntimeException e) {
+            log.warn("Failed to issue coupon {} to customer {}: {}", couponId, customerInputId, e.getMessage());
+            
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            } else if (e.getMessage().contains("already issued")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            }
+        } catch (Exception e) {
+            log.error("Failed to issue coupon {} to customer {}", couponId, customerInputId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to issue coupon: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/revoke-coupon/{customerInputId}/{couponId}")
+    @Operation(summary = "특정 고객의 쿠폰 발급 취소", description = "관리자가 특정 고객의 발급된 쿠폰을 취소합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "쿠폰 발급 취소 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 (발급되지 않은 쿠폰 등)"),
+        @ApiResponse(responseCode = "404", description = "고객 또는 쿠폰을 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<?> revokeCouponFromCustomer(
+            @Parameter(description = "고객 입력 ID", example = "testuser123", required = true) 
+            @PathVariable String customerInputId,
+            @Parameter(description = "쿠폰 ID", example = "1", required = true) 
+            @PathVariable Long couponId) {
+        try {
+            issueCouponService.revokeCouponFromCustomer(customerInputId, couponId);
+            
+            log.info("Admin revoked coupon {} from customer: {}", couponId, customerInputId);
+            return ResponseEntity.noContent().build();
+            
+        } catch (RuntimeException e) {
+            log.warn("Failed to revoke coupon {} from customer {}: {}", couponId, customerInputId, e.getMessage());
+            
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            }
+        } catch (Exception e) {
+            log.error("Failed to revoke coupon {} from customer {}", couponId, customerInputId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to revoke coupon: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/customer-coupons/{customerInputId}")
+    @Operation(summary = "특정 고객의 발급된 쿠폰 목록 조회", description = "관리자가 특정 고객에게 발급된 모든 쿠폰 목록을 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "쿠폰 목록 조회 성공",
+                content = @Content(schema = @Schema(implementation = IssuedCouponResponse.class))),
+        @ApiResponse(responseCode = "404", description = "고객을 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<?> getCustomerCoupons(
+            @Parameter(description = "고객 입력 ID", example = "testuser123", required = true) 
+            @PathVariable String customerInputId) {
+        try {
+            List<IssuedCouponResponse> coupons = issueCouponService.getIssuedCouponsByCustomerInputId(customerInputId);
+            
+            log.info("Admin retrieved {} coupons for customer: {}", coupons.size(), customerInputId);
+            return ResponseEntity.ok(coupons);
+            
+        } catch (Exception e) {
+            log.error("Failed to retrieve coupons for customer {}", customerInputId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to retrieve customer coupons: " + e.getMessage());
+        }
     }
 }
