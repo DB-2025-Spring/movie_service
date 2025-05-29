@@ -76,7 +76,7 @@ public class ScheduleService {
         return cSchedule;
     }
 
-    //시험삼아 Dto로 정의. cgv를 보니, 해당날자 기준, 방영한 영화를 포함해서 다 조회하기에, 금일 기준으로 조회하게 정의했습니다.
+    //cgv를 보니, 해당날자 기준, 방영한 영화를 포함해서 다 조회하기에, 금일 기준으로 조회하게 정의했습니다.
     public List<Schedule> getSchedulesForNext7Days(Long movieId) {
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
         LocalDateTime endOfTargetDay = startOfToday.plusDays(7);
@@ -84,8 +84,8 @@ public class ScheduleService {
         return scheduleRepository.findSchedulesForNext7Days(movieId, startOfToday, endOfTargetDay);
     }
 
-    public Map<Long,Long> getSchedulesFor1Day(LocalDate selectedDate) {
-        List<Schedule> schedulesList =scheduleRepository.findSchedulesByDate(selectedDate);
+    public Map<Long,Long> getSchedulesFor1Day(LocalDate selectedDate,Long movieId) {
+        List<Schedule> schedulesList =scheduleRepository.findByScheduleDateAndMovie_MovieId(selectedDate,movieId);
         List<Long> scheduleId =  schedulesList.stream().map(Schedule::getScheduleId).toList();
         return seatAvailableService.countAvailableSeatMap(scheduleId);
     }
