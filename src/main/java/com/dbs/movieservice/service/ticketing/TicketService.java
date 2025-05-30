@@ -66,7 +66,7 @@ public class TicketService {
     public void deleteTicket(Payment payment) {
         List<Ticket> tickets = ticketRepository.findByPayment(payment);
         List<Seat> seats = tickets.stream().map(Ticket::getSeat).toList();
-        seatAvailableService.updateAvailableSeat(tickets.get(0).getSchedule(),seats,"f");
+        seatAvailableService.updateAvailableSeat(tickets.get(0).getSchedule(),seats,"F");
         ticketRepository.deleteAll(tickets);
     }
 
