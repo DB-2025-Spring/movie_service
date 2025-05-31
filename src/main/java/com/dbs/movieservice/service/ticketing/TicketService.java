@@ -96,14 +96,36 @@ public class TicketService {
         ticketRepository.saveAll(tickets);
     }
 
-    //todo: 티켓과 결제를 확인하고 삭제/업데이트
-    //이 함수는 payment에서 호출 될 함수이기에 transaction을 선언안함.
+    /**
+     *
+     * @param payment
+     * payment에 대해 삭제함. (예매취소)
+     */
     public void deleteTicket(Payment payment) {
         List<Ticket> tickets = ticketRepository.findByPayment(payment);
         List<Seat> seats = tickets.stream().map(Ticket::getSeat).toList();
         seatAvailableService.updateAvailableSeat(tickets.get(0).getSchedule(),seats,"F");
         ticketRepository.deleteAll(tickets);
     }
+
+    /**
+     *
+     * @param ticketIds
+     * 예매 취소가 아닌, 결제 취소 하는경우.
+     */
+    @Transactional
+    public void deleteTicketsBeforePay(List<Long> ticketIds) {
+
+        List<Ticket> tickets = ticketRepository.findAllById(ticketIds);
+        if (tickets.size() != ticketIds.size()) {
+            throw new IllegalArgumentException("일부 티켓 ID가 존재하지 않습니다.");
+        }
+        List<Seat> seats = tickets.stream().map(Ticket::getSeat).toList();
+        seatAvailableService.updateAvailableSeat(tickets.get(0).getSchedule(),seats,"F");
+        ticketRepository.deleteAll(tickets);
+    }
+
+
     public int countCustomerTicket(Payment payment) {
         return ticketRepository.countByPayment(payment);
     }

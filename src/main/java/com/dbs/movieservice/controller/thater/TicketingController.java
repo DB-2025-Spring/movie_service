@@ -130,6 +130,31 @@ public class TicketingController {
         private int adultNumber;
     }
 
+    @PostMapping("/cancel-payment")
+    @Operation(
+            summary = "결제 취소",
+            description = "결제 ID를 통해 결제를 취소하고 관련 티켓도 삭제합니다. 결제가 존재하지 않거나 이미 취소된 경우 에러를 반환합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "결제 취소 성공",
+                    content = @Content(schema = @Schema(implementation = Payment.class))),
+            @ApiResponse(responseCode = "400", description = "결제 취소 실패 (예: 결제 없음 또는 잘못된 ID)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    public ResponseEntity<?> cancelPayment(@RequestBody CancelPaymentRequest request) {
+        try {
+            Payment payment = new Payment();
+            payment.setPaymentId(request.getPaymentId());
+
+            Payment cancelled = paymentService.cancelPayment(payment);
+            return ResponseEntity.ok(cancelled);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
     /**
      * 결제 생성용 DTO
      */
@@ -150,5 +175,17 @@ public class TicketingController {
     public static class ErrorResponse {
         @Schema(description = "에러 메시지", example = "결제 금액이 0보다 작을 수 없습니다.")
         private String message;
+    }
+
+    /**
+     * 결제 취소 요청 DTO
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CancelPaymentRequest {
+        @Schema(description = "취소할 결제 ID", example = "123")
+        private Long paymentId;
     }
 }
