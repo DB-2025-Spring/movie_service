@@ -114,21 +114,6 @@ public class TicketingController {
     }
 
 
-
-    /**
-     * 티켓 생성용 DTO
-     */
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class TicketCreateRequest {
-        private Long customerId;
-        private Long scheduleId;
-        private List<Long> seatIds;
-        private int adultNumber;
-    }
-
     @PostMapping("/cancel-payment")
     @Operation(
             summary = "결제 취소",
@@ -171,6 +156,20 @@ public class TicketingController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
         }
+    }
+
+    /**
+     * 티켓 생성용 DTO
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TicketCreateRequest {
+        private Long customerId;
+        private Long scheduleId;
+        private List<Long> seatIds;
+        private int adultNumber;
     }
 
     /**
