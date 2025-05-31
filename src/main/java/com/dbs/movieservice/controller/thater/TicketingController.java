@@ -36,7 +36,6 @@ import java.util.List;
 public class TicketingController {
     private final TicketService ticketService;
     private final PaymentService paymentService;
-    private final TicketRepository ticketRepository;
 
 //    String customerInputId = SecurityUtils.getCurrentCustomerInputId();
 
@@ -155,6 +154,25 @@ public class TicketingController {
         }
     }
 
+    @PostMapping("/delete-temporary-tickets")
+    @Operation(
+            summary = "임시 티켓 삭제",
+            description = "결제 전에 생성된 티켓들을 삭제합니다. 해당 좌석은 다시 사용 가능해집니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "임시 티켓 삭제 성공"),
+            @ApiResponse(responseCode = "400", description = "요청한 티켓 중 일부가 존재하지 않음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    public ResponseEntity<?> deleteTemporaryTickets(@RequestBody DeleteTicketsRequest request) {
+        try {
+            ticketService.deleteTicketsBeforePay(request.getTicketIds());
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
     /**
      * 결제 생성용 DTO
      */
@@ -187,5 +205,16 @@ public class TicketingController {
     public static class CancelPaymentRequest {
         @Schema(description = "취소할 결제 ID", example = "123")
         private Long paymentId;
+    }
+
+    /**
+     * 예매취소가 아닌, 결제 취소 요청을 위한 DTO
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DeleteTicketsRequest {
+        private List<Long> ticketIds;
     }
 }
