@@ -1,9 +1,12 @@
 package com.dbs.movieservice.controller.thater;
 
+import com.dbs.movieservice.domain.member.Card;
 import com.dbs.movieservice.domain.member.Customer;
 import com.dbs.movieservice.domain.theater.Schedule;
 import com.dbs.movieservice.domain.theater.Seat;
+import com.dbs.movieservice.domain.ticketing.Payment;
 import com.dbs.movieservice.domain.ticketing.Ticket;
+import com.dbs.movieservice.repository.ticketing.TicketRepository;
 import com.dbs.movieservice.service.ticketing.PaymentService;
 import com.dbs.movieservice.service.ticketing.TicketService;
 import com.dbs.movieservice.util.SecurityUtils;
@@ -33,6 +36,7 @@ import java.util.List;
 public class TicketingController {
     private final TicketService ticketService;
     private final PaymentService paymentService;
+    private final TicketRepository ticketRepository;
 
 //    String customerInputId = SecurityUtils.getCurrentCustomerInputId();
 
@@ -52,7 +56,7 @@ public class TicketingController {
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터 (예: 좌석 ID 또는 스케줄 ID가 없음)"),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    public ResponseEntity<List<Ticket>> createTickets(@RequestBody TicketCreateRequest request) {
+    public ResponseEntity<?> createTickets(@RequestBody TicketCreateRequest request) {
 
             Customer customer = new Customer();
             customer.setCustomerId(request.getCustomerId());
@@ -67,10 +71,29 @@ public class TicketingController {
             List<Ticket> tickets = ticketService.createTicketForCustomer(customer,schedule,seats, request.adultNumber);
 
             if (tickets.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(List.of()); // 좌석 중복 등 실패
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("이미 예약된 좌석입니다."); // 좌석 중복 등 실패
             }
             return ResponseEntity.ok(tickets);
-        }
+    }
+
+    @PostMapping("/create-payment")
+    @Operation(
+            summary = "결제 생성",
+            description = "전달받은 티켓들로부터, 결제를 생성. 카드잔액이나, 포인트가 부족할 시 에러를 리턴."
+    )
+    public ResponseEntity<?> createPayment(@RequestBody PaymentRequest request) {
+        Customer customer = new Customer();
+        customer.setCustomerId(request.getCustomerId());
+        Card card = new Card();
+        card.setCardId(request.getCardId());
+        List<Ticket> tickets = request.getTicketIds().stream().map(ticketId->{
+            Ticket ticket = ticketRepository.getById(ticketId);
+            return ticket;
+        }).toList();
+
+        Payment payment = paymentService.createPayment(customer, tickets, card, request.getUsePoint(),request.getDiscountAmount());
+
+    }
 
 
     /**
@@ -85,5 +108,20 @@ public class TicketingController {
         private Long scheduleId;
         private List<Long> seatIds;
         private int adultNumber;
+    }
+
+    /**
+     * 결제 생성용 DTO
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PaymentRequest {
+        private Long customerId;
+        private List<Long> TicketIds;
+        private Long cardId;
+        private int usePoint;
+        private int discountAmount;
     }
 }

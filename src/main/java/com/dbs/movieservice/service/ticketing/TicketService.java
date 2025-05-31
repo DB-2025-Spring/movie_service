@@ -7,7 +7,7 @@ import com.dbs.movieservice.domain.ticketing.Payment;
 import com.dbs.movieservice.domain.ticketing.Ticket;
 import com.dbs.movieservice.repository.ticketing.TicketRepository;
 import com.dbs.movieservice.service.theater.SeatAvailableService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -106,5 +106,12 @@ public class TicketService {
     }
     public int countCustomerTicket(Payment payment) {
         return ticketRepository.countByPayment(payment);
+    }
+
+    @Transactional(readOnly=true)
+    public List<Ticket> getTicketsByIds(List<Long> ticketIds) {
+        return ticketIds.stream()
+                .map(ticketRepository::getReferenceById) // 또는 getById
+                .toList();
     }
 }

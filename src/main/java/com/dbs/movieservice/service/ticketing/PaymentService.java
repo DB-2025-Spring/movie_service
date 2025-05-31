@@ -5,7 +5,7 @@ import com.dbs.movieservice.domain.member.Customer;
 import com.dbs.movieservice.domain.ticketing.Payment;
 import com.dbs.movieservice.domain.ticketing.Ticket;
 import com.dbs.movieservice.repository.ticketing.PaymentRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
