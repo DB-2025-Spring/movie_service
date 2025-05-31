@@ -91,7 +91,7 @@ public class TicketService {
     public void confirmPaymentForTicket(List<Ticket> tickets, Payment payment){
         tickets.forEach(ticket->{
             ticket.setPayment(payment);
-            seatAvailableService.updateAvailableSeat(ticket.getSchedule(), List.of(ticket.getSeat()),"F");
+            seatAvailableService.updateAvailableSeat(ticket.getSchedule(), List.of(ticket.getSeat()),"T");
         });
         ticketRepository.saveAll(tickets);
     }
@@ -110,8 +110,22 @@ public class TicketService {
 
     @Transactional(readOnly=true)
     public List<Ticket> getTicketsByIds(List<Long> ticketIds) {
-        return ticketIds.stream()
-                .map(ticketRepository::getReferenceById) // 또는 getById
-                .toList();
+        return ticketRepository.findAllById(ticketIds);
+    }
+
+
+    /**
+     * 
+     * @param tickets
+     * @param customerId
+     * 티켓에 대한, customer가 유효한지 검증하는 코드
+     */
+    public void validateTicketsOwnership(List<Ticket> tickets, Long customerId) {
+        boolean hasInvalidOwner = tickets.stream()
+                .anyMatch(ticket -> !ticket.getCustomer().getCustomerId().equals(customerId));
+
+        if (hasInvalidOwner) {
+            throw new RuntimeException("티켓에 대한 접근 권한이 없습니다.");
+        }
     }
 }

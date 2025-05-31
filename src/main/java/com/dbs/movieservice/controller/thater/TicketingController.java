@@ -81,19 +81,39 @@ public class TicketingController {
             summary = "결제 생성",
             description = "전달받은 티켓들로부터, 결제를 생성. 카드잔액이나, 포인트가 부족할 시 에러를 리턴."
     )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "결제 생성 성공",
+                    content = @Content(schema = @Schema(implementation = Payment.class))),
+            @ApiResponse(responseCode = "400", description = "결제 실패 (예: 포인트 부족, 결제 금액 음수)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
     public ResponseEntity<?> createPayment(@RequestBody PaymentRequest request) {
-        Customer customer = new Customer();
-        customer.setCustomerId(request.getCustomerId());
-        Card card = new Card();
-        card.setCardId(request.getCardId());
-        List<Ticket> tickets = request.getTicketIds().stream().map(ticketId->{
-            Ticket ticket = ticketRepository.getById(ticketId);
-            return ticket;
-        }).toList();
+        try {
+            Customer customer = new Customer();
+            customer.setCustomerId(request.getCustomerId());
 
-        Payment payment = paymentService.createPayment(customer, tickets, card, request.getUsePoint(),request.getDiscountAmount());
+            Card card = new Card();
+            card.setCardId(request.getCardId());
 
+            List<Ticket> tickets = ticketService.getTicketsByIds(request.getTicketIds());
+            ticketService.validateTicketsOwnership(tickets, customer.getCustomerId());
+            Payment payment = paymentService.createPayment(
+                    customer,
+                    tickets,
+                    card,
+                    request.getUsePoint(),
+                    request.getDiscountAmount()
+            );
+
+            return ResponseEntity.ok(payment);
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponse(e.getMessage()));
+        }
     }
+
 
 
     /**
@@ -119,9 +139,16 @@ public class TicketingController {
     @AllArgsConstructor
     public static class PaymentRequest {
         private Long customerId;
-        private List<Long> TicketIds;
+        private List<Long> ticketIds;
         private Long cardId;
         private int usePoint;
         private int discountAmount;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class ErrorResponse {
+        @Schema(description = "에러 메시지", example = "결제 금액이 0보다 작을 수 없습니다.")
+        private String message;
     }
 }
