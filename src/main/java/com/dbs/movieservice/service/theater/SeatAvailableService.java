@@ -23,7 +23,7 @@ public class SeatAvailableService {
     private final SeatRepository seatRepository;
     private final SeatAvailableRepository seatAvailableRepository;
 
-    public SeatAvailableService(SeatRepository seatRepository,ScheduleRepository scheduleRepository,SeatAvailableRepository seatAvailableRepository) {
+    public SeatAvailableService(SeatRepository seatRepository,SeatAvailableRepository seatAvailableRepository) {
         this.seatRepository = seatRepository;
         this.seatAvailableRepository = seatAvailableRepository;
     }
