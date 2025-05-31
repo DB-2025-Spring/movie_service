@@ -11,8 +11,6 @@ import lombok.Setter;
 @Table(name="card")
 public class Card {
     @Id
-    @SequenceGenerator(name="card_seq", sequenceName = "card_seq", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "card_seq")
     @Column(name="card_id")
     private Long cardId;
 
