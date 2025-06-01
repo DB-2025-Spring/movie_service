@@ -3,7 +3,6 @@ package com.dbs.movieservice.service.member;
 import com.dbs.movieservice.controller.dto.SignupRequest;
 import com.dbs.movieservice.domain.member.Role;
 import com.dbs.movieservice.domain.member.Customer;
-import com.dbs.movieservice.domain.member.ClientLevel;
 import com.dbs.movieservice.repository.member.ClientLevelRepository;
 import com.dbs.movieservice.repository.member.CustomerRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
