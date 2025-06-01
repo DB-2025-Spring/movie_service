@@ -21,7 +21,10 @@ public class TheaterService {
      * 기존 메서드 - 상영관 생성
      */
     @Transactional
-    public Theater createTheater(Theater theater) {
+    public Theater createTheater(String theaterName) {
+        Theater theater = new Theater();
+        theater.setTheaterName(theaterName);
+        theater.setTotalSeats(0);
         return theaterRepository.save(theater);
     }
 

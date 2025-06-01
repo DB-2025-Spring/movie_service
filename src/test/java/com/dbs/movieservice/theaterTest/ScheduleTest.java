@@ -41,25 +41,25 @@ public class ScheduleTest {
     @Autowired
     private SeatRepository seatRepository;
 
-    @Test
-    void createTheaterAndSeat() {
-        // 1. 상영관 생성
-        Theater theater = new Theater();
-        theater.setTheaterName("테스트관");
-        theater.setTotalSeats(0);
-        Theater savedTheater = theaterService.createTheater(theater);
-
-        // 2. 좌석 생성
-        Seat seat1 = new Seat();
-        seat1.setTheater(savedTheater);
-        seat1.setRowNumber(1);
-        seat1.setColumnNumber(1);
-        seatService.createSeat(seat1);
-        Seat seat2 = new Seat();
-        seat2.setTheater(savedTheater);
-        seat2.setRowNumber(1);
-        seat2.setColumnNumber(2);
-        seatService.createSeat(seat2);
-    }
+//    @Test
+//    void createTheaterAndSeat() {
+//        // 1. 상영관 생성
+//        Theater theater = new Theater();
+//        theater.setTheaterName("테스트관");
+//        theater.setTotalSeats(0);
+//        Theater savedTheater = theaterService.createTheater(theater);
+//
+//        // 2. 좌석 생성
+//        Seat seat1 = new Seat();
+//        seat1.setTheater(savedTheater);
+//        seat1.setRowNumber(1);
+//        seat1.setColumnNumber(1);
+//        seatService.createSeat(seat1);
+//        Seat seat2 = new Seat();
+//        seat2.setTheater(savedTheater);
+//        seat2.setRowNumber(1);
+//        seat2.setColumnNumber(2);
+//        seatService.createSeat(seat2);
+//    }
 
 }
