@@ -21,7 +21,7 @@ public class IssuedCouponResponse {
     @Schema(description = "쿠폰 이름", example = "생일 쿠폰")
     private String couponName;
     
-    @Schema(description = "쿠폰 설명", example = "팝콘 무료 제공")
+    @Schema(description = "쿠폰 설명", example = "팝콘&콜라 무료 제공")
     private String couponDescription;
     
     @Schema(description = "쿠폰 시작일", example = "2024-01-01")
