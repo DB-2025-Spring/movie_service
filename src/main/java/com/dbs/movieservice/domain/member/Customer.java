@@ -45,6 +45,39 @@ public class Customer {
     @JoinColumn(name = "level_id", nullable = false)
     private ClientLevel level;
 
+    // 포인트 증가 메서드
+    public void addPoints(int amount) {
+        if (amount < 0) {
+            throw new IllegalArgumentException("포인트 증가 금액은 음수일 수 없습니다.");
+        }
+        if (this.points == null) {
+            this.points = 0;
+        }
+        this.points += amount;
+    }
+
+    // 포인트 차감 메서드
+    public void deductPoints(int amount) {
+        if (amount < 0) {
+            throw new IllegalArgumentException("포인트 차감 금액은 음수일 수 없습니다.");
+        }
+        if (this.points == null) {
+            this.points = 0;
+        }
+        if (this.points < amount) {
+            throw new IllegalStateException("보유 포인트가 부족합니다. 현재 포인트: " + this.points + ", 차감 요청 포인트: " + amount);
+        }
+        this.points -= amount;
+    }
+
+    // 포인트 잔액 확인 메서드
+    public boolean hasEnoughPoints(int amount) {
+        if (this.points == null) {
+            return amount <= 0;
+        }
+        return this.points >= amount;
+    }
+
 /*
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews = new ArrayList<>();
