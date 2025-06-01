@@ -127,16 +127,8 @@ public class TicketingController {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public ResponseEntity<?> cancelPayment(@RequestBody CancelPaymentRequest request) {
-        try {
-            Payment payment = new Payment();
-            payment.setPaymentId(request.getPaymentId());
-
-            Payment cancelled = paymentService.cancelPayment(payment);
-            return ResponseEntity.ok(cancelled);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest()
-                    .body(new ErrorResponse(e.getMessage()));
-        }
+            Payment cancelledPayment = paymentService.cancelPayment(request.getPaymentId());
+            return ResponseEntity.ok("cancelledPayment");
     }
 
     @PostMapping("/delete-temporary-tickets")

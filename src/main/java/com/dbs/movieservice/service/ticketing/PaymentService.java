@@ -46,17 +46,16 @@ public class PaymentService {
     }
 
     @Transactional
-    public Payment cancelPayment(Payment payment) {
-        Payment targetPayment = paymentRepository.findById(payment.getPaymentId())
+    public Payment cancelPayment(Long paymentId) {
+        Payment targetPayment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new IllegalArgumentException("Payment not found"));
         targetPayment.setPaymentStatus("cancelled");
-        paymentRepository.flush();
 //        int usedPoint = targetPayment.getUsedPoints();
 //        int usedMoney = targetPayment.getPaymentAmount();
 //        Customer customer = payment.getCustomer();
 //        Card card = payment.getCard();
         //usedPoint, usedMoney, customer, card값을 전달하고, 값을 갱신하는 코드 호출
-        ticketService.deleteTicket(targetPayment);
+//        ticketService.deleteTicket(targetPayment);
         return targetPayment;
     }
 
