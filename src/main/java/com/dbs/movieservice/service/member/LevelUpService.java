@@ -30,7 +30,7 @@ public class LevelUpService {
      * 고객의 등급을 업데이트하고, 등급업 시 축하 쿠폰을 발급합니다.
      * 
      * @param customerInputId 고객 ID
-     * @param ticketCount 구매한 티켓 수
+     * @param ticketCount 현재까지 구매한 티켓 수
      * @return 등급업 여부
      */
     public boolean processLevelUp(String customerInputId, int ticketCount) {

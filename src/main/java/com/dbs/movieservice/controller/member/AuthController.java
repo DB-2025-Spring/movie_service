@@ -75,30 +75,13 @@ public class AuthController {
     public ResponseEntity<?> authenticateCustomer(@Valid @RequestBody AuthRequest loginRequest, 
                                                  HttpServletRequest request) {
         
-        try {
-            // 1. 관리자 계정 확인
-            if (isAdminAccount(loginRequest)) {
-                return handleAdminLogin(loginRequest, request);
-            }
-            
-            // 2. 일반 사용자 로그인 처리
-            return handleUserLogin(loginRequest);
-        } catch (BadCredentialsException e) {
-            log.warn("Login failed - Invalid credentials for user: {} from IP: {}", 
-                    loginRequest.getCustomerInputId(), getClientIP(request));
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Invalid username or password");
-        } catch (AuthenticationException e) {
-            log.warn("Login failed - Authentication error for user: {} from IP: {}", 
-                    loginRequest.getCustomerInputId(), getClientIP(request));
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Authentication failed");
-        } catch (Exception e) {
-            log.error("Login failed - Unexpected error for user: {} from IP: {}", 
-                    loginRequest.getCustomerInputId(), getClientIP(request), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Internal server error");
+        // 1. 관리자 계정 확인
+        if (isAdminAccount(loginRequest)) {
+            return handleAdminLogin(loginRequest, request);
         }
+        
+        // 2. 일반 사용자 로그인 처리
+        return handleUserLogin(loginRequest);
     }
     
     /**
@@ -220,38 +203,23 @@ public class AuthController {
                 content = @Content(schema = @Schema(implementation = String.class)))
     })
     public ResponseEntity<?> registerCustomer(@Valid @RequestBody SignupRequest signupRequest) {
+        // DTO를 서비스 계층에 전달하여 Customer 생성 및 저장 로직을 처리
+        customerService.registerCustomer(signupRequest);
+        
+        // 회원가입 성공 후 신규가입쿠폰 발급
         try {
-            // DTO를 서비스 계층에 전달하여 Customer 생성 및 저장 로직을 처리
-            customerService.registerCustomer(signupRequest);
-            
-            // 회원가입 성공 후 신규가입쿠폰 발급
-            try {
-                boolean signupCouponIssued = signupCouponService.issueSignupCoupon(signupRequest.getCustomerInputId());
-                if (signupCouponIssued) {
-                    log.info("Signup coupon issued for new user: {}", signupRequest.getCustomerInputId());
-                }
-            } catch (Exception e) {
-                log.warn("Failed to issue signup coupon for new user: {}", 
-                        signupRequest.getCustomerInputId(), e);
-                // 신규가입쿠폰 발급 실패는 회원가입 실패로 처리하지 않음
+            boolean signupCouponIssued = signupCouponService.issueSignupCoupon(signupRequest.getCustomerInputId());
+            if (signupCouponIssued) {
+                log.info("Signup coupon issued for new user: {}", signupRequest.getCustomerInputId());
             }
-            
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body("User registered successfully!");
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("Username is already taken")) {
-                log.warn("Signup failed - Username already exists: {}", signupRequest.getCustomerInputId());
-                return ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body("Username is already taken");
-            }
-            log.error("Signup failed - Unexpected error for user: {}", signupRequest.getCustomerInputId(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Registration failed due to server error");
         } catch (Exception e) {
-            log.error("Signup failed - Unexpected error for user: {}", signupRequest.getCustomerInputId(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Registration failed due to server error");
+            log.warn("Failed to issue signup coupon for new user: {}", 
+                    signupRequest.getCustomerInputId(), e);
+            // 신규가입쿠폰 발급 실패는 회원가입 실패로 처리하지 않음
         }
+        
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body("User registered successfully!");
     }
 
     // ==================== 비회원 관련 API ====================
@@ -267,17 +235,8 @@ public class AuthController {
     })
     public ResponseEntity<GuestSignupResponse> registerGuest(
             @Valid @RequestBody GuestSignupRequest request) {
-        try {
-            GuestSignupResponse response = guestService.registerGuest(request);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            log.error("비회원 등록 실패: {}", e.getMessage());
-            return ResponseEntity.status(409).body(
-                GuestSignupResponse.builder()
-                    .message(e.getMessage())
-                    .build()
-            );
-        }
+        GuestSignupResponse response = guestService.registerGuest(request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/guest-login")
@@ -291,38 +250,25 @@ public class AuthController {
     })
     public ResponseEntity<GuestSignupResponse> loginGuest(
             @Valid @RequestBody GuestLoginRequest request) {
-        try {
-            Optional<Customer> customerOpt = guestService.authenticateGuest(
-                request.getPhone(), request.getPassword());
+        Optional<Customer> customerOpt = guestService.authenticateGuest(
+            request.getPhone(), request.getPassword());
+        
+        if (customerOpt.isPresent()) {
+            Customer customer = customerOpt.get();
+            log.info("비회원 로그인 성공: {}", customer.getCustomerInputId());
             
-            if (customerOpt.isPresent()) {
-                Customer customer = customerOpt.get();
-                log.info("비회원 로그인 성공: {}", customer.getCustomerInputId());
-                
-                GuestSignupResponse response = GuestSignupResponse.builder()
-                        .customerInputId(customer.getCustomerInputId())
-                        .customerName(customer.getCustomerName())
-                        .phone(customer.getPhone())
-                        .joinDate(customer.getJoinDate())
-                        .message("비회원 인증이 완료되었습니다.")
-                        .build();
-                
-                return ResponseEntity.ok(response);
-            } else {
-                log.warn("비회원 로그인 실패 - 인증 정보 불일치: {}", request.getPhone());
-                return ResponseEntity.status(401).body(
-                    GuestSignupResponse.builder()
-                        .message("전화번호 또는 비밀번호가 일치하지 않습니다.")
-                        .build()
-                );
-            }
-        } catch (Exception e) {
-            log.error("비회원 로그인 처리 중 오류: {}", e.getMessage());
-            return ResponseEntity.status(500).body(
-                GuestSignupResponse.builder()
-                    .message("로그인 처리 중 오류가 발생했습니다.")
-                    .build()
-            );
+            GuestSignupResponse response = GuestSignupResponse.builder()
+                    .customerInputId(customer.getCustomerInputId())
+                    .customerName(customer.getCustomerName())
+                    .phone(customer.getPhone())
+                    .joinDate(customer.getJoinDate())
+                    .message("비회원 인증이 완료되었습니다.")
+                    .build();
+            
+            return ResponseEntity.ok(response);
+        } else {
+            log.warn("비회원 로그인 실패 - 인증 정보 불일치: {}", request.getPhone());
+            throw new BadCredentialsException("전화번호 또는 비밀번호가 일치하지 않습니다.");
         }
     }
     
@@ -338,25 +284,18 @@ public class AuthController {
             @Parameter(description = "확인할 사용자 ID", example = "testuser123", required = true) 
             @RequestParam String customerInputId) {
         
-        try {
-            if (customerInputId == null || customerInputId.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("{\"error\": \"Customer ID is required\"}");
-            }
-            
-            boolean isDuplicate = customerService.checkDuplicateCustomerId(customerInputId);
-            
-            if (isDuplicate) {
-                return ResponseEntity.ok()
-                        .body("{\"available\": false, \"message\": \"Username is already taken\"}");
-            } else {
-                return ResponseEntity.ok()
-                        .body("{\"available\": true, \"message\": \"Username is available\"}");
-            }
-        } catch (Exception e) {
-            log.error("Username check failed for: {}", customerInputId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("{\"error\": \"Internal server error\"}");
+        if (customerInputId == null || customerInputId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Customer ID is required");
+        }
+        
+        boolean isDuplicate = customerService.checkDuplicateCustomerId(customerInputId);
+        
+        if (isDuplicate) {
+            return ResponseEntity.ok()
+                    .body("{\"available\": false, \"message\": \"Username is already taken\"}");
+        } else {
+            return ResponseEntity.ok()
+                    .body("{\"available\": true, \"message\": \"Username is available\"}");
         }
     }
 } 

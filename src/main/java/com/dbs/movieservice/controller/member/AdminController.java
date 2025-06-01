@@ -606,27 +606,10 @@ public class AdminController {
             @PathVariable String customerInputId,
             @Parameter(description = "쿠폰 ID", example = "1", required = true) 
             @PathVariable Long couponId) {
-        try {
-            IssuedCouponResponse issuedCoupon = issueCouponService.issueCouponToCustomer(customerInputId, couponId);
-            
-            log.info("Admin issued coupon {} to customer: {}", couponId, customerInputId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(issuedCoupon);
-            
-        } catch (RuntimeException e) {
-            log.warn("Failed to issue coupon {} to customer {}: {}", couponId, customerInputId, e.getMessage());
-            
-            if (e.getMessage().contains("not found")) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-            } else if (e.getMessage().contains("already issued")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-            }
-        } catch (Exception e) {
-            log.error("Failed to issue coupon {} to customer {}", couponId, customerInputId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to issue coupon: " + e.getMessage());
-        }
+        IssuedCouponResponse issuedCoupon = issueCouponService.issueCouponToCustomer(customerInputId, couponId);
+        
+        log.info("Admin issued coupon {} to customer: {}", couponId, customerInputId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(issuedCoupon);
     }
 
     @DeleteMapping("/revoke-coupon/{customerInputId}/{couponId}")
@@ -643,25 +626,10 @@ public class AdminController {
             @PathVariable String customerInputId,
             @Parameter(description = "쿠폰 ID", example = "1", required = true) 
             @PathVariable Long couponId) {
-        try {
-            issueCouponService.revokeCouponFromCustomer(customerInputId, couponId);
-            
-            log.info("Admin revoked coupon {} from customer: {}", couponId, customerInputId);
-            return ResponseEntity.noContent().build();
-            
-        } catch (RuntimeException e) {
-            log.warn("Failed to revoke coupon {} from customer {}: {}", couponId, customerInputId, e.getMessage());
-            
-            if (e.getMessage().contains("not found")) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-            }
-        } catch (Exception e) {
-            log.error("Failed to revoke coupon {} from customer {}", couponId, customerInputId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to revoke coupon: " + e.getMessage());
-        }
+        issueCouponService.revokeCouponFromCustomer(customerInputId, couponId);
+        
+        log.info("Admin revoked coupon {} from customer: {}", couponId, customerInputId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/customer-coupons/{customerInputId}")
@@ -676,16 +644,9 @@ public class AdminController {
     public ResponseEntity<?> getCustomerCoupons(
             @Parameter(description = "고객 입력 ID", example = "testuser123", required = true) 
             @PathVariable String customerInputId) {
-        try {
-            List<IssuedCouponResponse> coupons = issueCouponService.getIssuedCouponsByCustomerInputId(customerInputId);
-            
-            log.info("Admin retrieved {} coupons for customer: {}", coupons.size(), customerInputId);
-            return ResponseEntity.ok(coupons);
-            
-        } catch (Exception e) {
-            log.error("Failed to retrieve coupons for customer {}", customerInputId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to retrieve customer coupons: " + e.getMessage());
-        }
+        List<IssuedCouponResponse> coupons = issueCouponService.getIssuedCouponsByCustomerInputId(customerInputId);
+        
+        log.info("Admin retrieved {} coupons for customer: {}", coupons.size(), customerInputId);
+        return ResponseEntity.ok(coupons);
     }
 }
