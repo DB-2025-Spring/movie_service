@@ -3,6 +3,7 @@ package com.dbs.movieservice.service.ticketing;
 import com.dbs.movieservice.domain.member.Customer;
 import com.dbs.movieservice.domain.theater.Schedule;
 import com.dbs.movieservice.domain.theater.Seat;
+import com.dbs.movieservice.domain.theater.Theater;
 import com.dbs.movieservice.domain.ticketing.Payment;
 import com.dbs.movieservice.domain.ticketing.Ticket;
 import com.dbs.movieservice.repository.ticketing.TicketRepository;
@@ -63,7 +64,6 @@ public class TicketService {
 
         Customer tempCustomer = new Customer();
         tempCustomer.setCustomerId(customer.getCustomerId());
-
         List<Ticket> createdTickets = new ArrayList<>();
         int adultCount = 0;
 
@@ -71,7 +71,7 @@ public class TicketService {
             Ticket tempTicket = new Ticket();
             tempTicket.setCustomer(tempCustomer);
             tempTicket.setSeat(seat);
-
+            tempTicket.setSchedule(schedule);
             if (adultCount < adultNumber) {
                 tempTicket.setAudienceType("A");
                 adultCount++;
@@ -103,6 +103,8 @@ public class TicketService {
      */
     public void deleteTicket(Payment payment) {
         List<Ticket> tickets = ticketRepository.findByPayment(payment);
+        System.out.println("//////");
+        System.out.println(tickets.size());
         List<Seat> seats = tickets.stream().map(Ticket::getSeat).toList();
         seatAvailableService.updateAvailableSeat(tickets.get(0).getSchedule(),seats,"F");
         ticketRepository.deleteAll(tickets);

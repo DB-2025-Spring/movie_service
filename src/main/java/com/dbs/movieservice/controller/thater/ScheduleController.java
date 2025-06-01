@@ -74,7 +74,7 @@ public class ScheduleController {
             @ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터"),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    public ResponseEntity<List<ScheduleSeatCountResponse>> getAvailableSeatCountForDate(
+    public ResponseEntity<?> getAvailableSeatCountForDate(
             @Parameter(description = "조회할 날짜 (예: 2025-06-01)", required = true)
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
 
@@ -87,8 +87,8 @@ public class ScheduleController {
             return ResponseEntity.noContent().build();
         }
 
-        List<ScheduleSeatCountResponse> resultList = resultMap.entrySet().stream()
-                .map(entry -> new ScheduleSeatCountResponse(entry.getKey(), entry.getValue()))
+        List<ScheduleSeatCountDto> resultList = resultMap.entrySet().stream()
+                .map(entry -> new ScheduleSeatCountDto(entry.getKey(), entry.getValue()))
                 .toList();
 
         return ResponseEntity.ok(resultList);
@@ -113,7 +113,7 @@ public class ScheduleController {
             @Parameter(description = "조회할 스케줄 ID", required = true)
             @PathVariable Long scheduleId
     ) {
-        Schedule schedule= new Schedule();
+        Schedule schedule = new Schedule();
         schedule.setScheduleId(scheduleId);
 
         List<SeatAvailable> availableSeats = seatAvailableService.getAvailableSeatForSchedule(schedule);
@@ -128,6 +128,16 @@ public class ScheduleController {
                 .toList();
         return ResponseEntity.ok(response);
     }
+
+
+
+
+
+
+    /**
+     * 이 아래로 DTO
+     */
+
     /**
      * getAvailableSeatCountForDate 함수를 위한 DTO
      */
@@ -177,6 +187,29 @@ public class ScheduleController {
             this.scheduleSequence = schedule.getScheduleSequence();
             this.scheduleStartTime = schedule.getScheduleStartTime();
             this.scheduleEndTime = schedule.getScheduleEndTime();
+        }
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    public class ScheduleSeatCountDto {
+        private Long scheduleId;
+        private Long movieId;
+        private Long theaterId;
+        private LocalDateTime scheduleStartTime;
+        private LocalDateTime scheduleEndTime;
+        private Integer scheduleSequence;
+        private Long availableSeatCount;
+
+        public ScheduleSeatCountDto(Schedule schedule, Long availableSeatCount) {
+            this.scheduleId = schedule.getScheduleId();
+            this.movieId = schedule.getMovie().getMovieId();          // Lazy 접근
+            this.theaterId = schedule.getTheater().getTheaterId();    // Lazy 접근
+            this.scheduleStartTime = schedule.getScheduleStartTime();
+            this.scheduleEndTime = schedule.getScheduleEndTime();
+            this.scheduleSequence = schedule.getScheduleSequence();
+            this.availableSeatCount = availableSeatCount;
         }
     }
 }

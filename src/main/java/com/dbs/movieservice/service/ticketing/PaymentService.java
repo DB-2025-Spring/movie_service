@@ -35,6 +35,7 @@ public class PaymentService {
         //카드 잔액 감소 서비스 호출
 
         Payment payment =  savePayment(customer,card,usePoint,disCountAmount,paymentAmount);
+        paymentRepository.flush();
         ticketService.confirmPaymentForTicket(tickets, payment);
         //총 결제 금액에 대해 customer의 포인트 증가 서비스 호출
         
@@ -49,10 +50,11 @@ public class PaymentService {
         Payment targetPayment = paymentRepository.findById(payment.getPaymentId())
                 .orElseThrow(() -> new IllegalArgumentException("Payment not found"));
         targetPayment.setPaymentStatus("cancelled");
-        int usedPoint = targetPayment.getUsedPoints();
-        int usedMoney = targetPayment.getPaymentAmount();
-        Customer customer = payment.getCustomer();
-        Card card = payment.getCard();
+        paymentRepository.flush();
+//        int usedPoint = targetPayment.getUsedPoints();
+//        int usedMoney = targetPayment.getPaymentAmount();
+//        Customer customer = payment.getCustomer();
+//        Card card = payment.getCard();
         //usedPoint, usedMoney, customer, card값을 전달하고, 값을 갱신하는 코드 호출
         ticketService.deleteTicket(targetPayment);
         return targetPayment;
@@ -63,7 +65,7 @@ public class PaymentService {
         payment.setCustomer(customer);
         payment.setPaymentAmount(paymentAmount);
         payment.setPaymentDate(LocalDate.now());
-        payment.setPaymentMethod(card.getCardCompany());
+        payment.setPaymentMethod("카드");
         payment.setDiscountAmount(disCountAmount);
         payment.setUsedPoints(usePoint);
         payment.setApprovalNumber(1);
