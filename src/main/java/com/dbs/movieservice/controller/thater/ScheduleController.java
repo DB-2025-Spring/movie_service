@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +31,8 @@ import java.util.Map;
 public class ScheduleController {
     private final ScheduleService scheduleService;
     private final SeatAvailableService seatAvailableService;
+
+
     @GetMapping("/available-schedule")
     @Operation(
             summary = "7일 간의 상영 스케줄 조회",
@@ -42,7 +45,7 @@ public class ScheduleController {
             @ApiResponse(responseCode = "400", description = "잘못된 요청"),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    public ResponseEntity<List<Schedule>> getAvailableSchedules(
+    public ResponseEntity<?> getAvailableSchedules(
             @Parameter(description = "조회할 영화의 ID", required = true)
             @RequestParam Long movieId) {
 
@@ -50,8 +53,10 @@ public class ScheduleController {
         if (schedules.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
-
-        return ResponseEntity.ok(schedules);
+        List<ScheduleDto> scheduleDtos = schedules.stream()
+                .map(ScheduleDto::new)
+                .toList();
+        return ResponseEntity.ok(scheduleDtos);
     }
 
     @GetMapping("/available-seat-for1day")
@@ -121,7 +126,6 @@ public class ScheduleController {
                         seat.getIsBooked()  // 문자열일 경우 boolean으로 변환
                 ))
                 .toList();
-
         return ResponseEntity.ok(response);
     }
     /**
@@ -148,5 +152,31 @@ public class ScheduleController {
         private Integer rowNumber;
         private Integer columnNumber;
         private String isBooked;
+    }
+
+    /**
+     * 스케쥴 조회용 dto
+     */
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    public class ScheduleDto {
+        private Long scheduleId;
+        private Long movieId;
+        private Long theaterId;
+        private LocalDate scheduleDate;
+        private Integer scheduleSequence;
+        private LocalDateTime scheduleStartTime;
+        private LocalDateTime scheduleEndTime;
+
+        public ScheduleDto(Schedule schedule) {
+            this.scheduleId = schedule.getScheduleId();
+            this.movieId = schedule.getMovie().getMovieId();
+            this.theaterId = schedule.getTheater().getTheaterId();
+            this.scheduleDate = schedule.getScheduleDate();
+            this.scheduleSequence = schedule.getScheduleSequence();
+            this.scheduleStartTime = schedule.getScheduleStartTime();
+            this.scheduleEndTime = schedule.getScheduleEndTime();
+        }
     }
 }
