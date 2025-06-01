@@ -94,12 +94,10 @@ public class ScheduleService {
     public Map<Schedule, Long> getSchedulesFor1Day(LocalDate selectedDate,Long movieId) {
         List<Schedule> schedulesList =scheduleRepository.findByScheduleDateAndMovie_MovieId(selectedDate,movieId);
         List<Long> scheduleIds = schedulesList.stream().map(Schedule::getScheduleId).toList();
-
         Map<Long, Long> countMap = seatAvailableService.countAvailableSeatMap(scheduleIds);
         // scheduleId → Schedule 객체 매핑용 Map
         Map<Long, Schedule> scheduleMap = schedulesList.stream()
                 .collect(Collectors.toMap(Schedule::getScheduleId, s -> s));
-
         // 최종 Map<Schedule, Long> 생성
         return countMap.entrySet().stream()
                 .collect(Collectors.toMap(
