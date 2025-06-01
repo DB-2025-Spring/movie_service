@@ -55,7 +55,7 @@ public class PaymentService {
 //        Customer customer = payment.getCustomer();
 //        Card card = payment.getCard();
         //usedPoint, usedMoney, customer, card값을 전달하고, 값을 갱신하는 코드 호출
-//        ticketService.deleteTicket(targetPayment);
+        ticketService.deleteTicket(targetPayment);
         return targetPayment;
     }
 
