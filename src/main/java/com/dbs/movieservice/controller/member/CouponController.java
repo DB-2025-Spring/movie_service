@@ -38,18 +38,12 @@ public class CouponController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public ResponseEntity<?> getMyCoupons() {
-        try {
-            String customerInputId = SecurityUtils.getCurrentCustomerInputId();
-            
-            List<IssuedCouponResponse> coupons = issueCouponService.getIssuedCouponsByCustomerInputId(customerInputId);
-            
-            log.info("Retrieved {} coupons for user: {}", coupons.size(), customerInputId);
-            return ResponseEntity.ok(coupons);
-            
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to retrieve coupons: " + e.getMessage());
-        }
+        String customerInputId = SecurityUtils.getCurrentCustomerInputId();
+        
+        List<IssuedCouponResponse> coupons = issueCouponService.getIssuedCouponsByCustomerInputId(customerInputId);
+        
+        log.info("Retrieved {} coupons for user: {}", coupons.size(), customerInputId);
+        return ResponseEntity.ok(coupons);
     }
 
     @GetMapping("/my-coupons/usable")
@@ -61,18 +55,12 @@ public class CouponController {
         @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public ResponseEntity<?> getMyUsableCoupons() {
-        try {
-            String customerInputId = SecurityUtils.getCurrentCustomerInputId();
-            
-            List<IssuedCouponResponse> usableCoupons = issueCouponService.getUsableCouponsByCustomerInputId(customerInputId);
-            
-            log.info("Retrieved {} usable coupons for user: {}", usableCoupons.size(), customerInputId);
-            return ResponseEntity.ok(usableCoupons);
-            
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to retrieve usable coupons: " + e.getMessage());
-        }
+        String customerInputId = SecurityUtils.getCurrentCustomerInputId();
+        
+        List<IssuedCouponResponse> usableCoupons = issueCouponService.getUsableCouponsByCustomerInputId(customerInputId);
+        
+        log.info("Retrieved {} usable coupons for user: {}", usableCoupons.size(), customerInputId);
+        return ResponseEntity.ok(usableCoupons);
     }
 
     @PostMapping("/issue/{couponId}")
@@ -88,27 +76,12 @@ public class CouponController {
     public ResponseEntity<?> issueCoupon(
             @Parameter(description = "발급할 쿠폰 ID", required = true)
             @PathVariable Long couponId) {
-        try {
-            String customerInputId = SecurityUtils.getCurrentCustomerInputId();
-            
-            IssuedCouponResponse issuedCoupon = issueCouponService.issueCouponToCustomer(customerInputId, couponId);
-            
-            log.info("Successfully issued coupon {} to user: {}", couponId, customerInputId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(issuedCoupon);
-            
-        } catch (RuntimeException e) {
-            
-            if (e.getMessage().contains("not found")) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-            } else if (e.getMessage().contains("already issued")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to issue coupon: " + e.getMessage());
-        }
+        String customerInputId = SecurityUtils.getCurrentCustomerInputId();
+        
+        IssuedCouponResponse issuedCoupon = issueCouponService.issueCouponToCustomer(customerInputId, couponId);
+        
+        log.info("Successfully issued coupon {} to user: {}", couponId, customerInputId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(issuedCoupon);
     }
 
     @GetMapping("/has-coupon/{couponId}")
@@ -121,17 +94,11 @@ public class CouponController {
     public ResponseEntity<?> hasCoupon(
             @Parameter(description = "확인할 쿠폰 ID", required = true)
             @PathVariable Long couponId) {
-        try {
-            String customerInputId = SecurityUtils.getCurrentCustomerInputId();
-            
-            boolean hasCoupon = issueCouponService.hasCoupon(customerInputId, couponId);
-            
-            return ResponseEntity.ok(new HasCouponResponse(hasCoupon, couponId, customerInputId));
-            
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to check coupon ownership: " + e.getMessage());
-        }
+        String customerInputId = SecurityUtils.getCurrentCustomerInputId();
+        
+        boolean hasCoupon = issueCouponService.hasCoupon(customerInputId, couponId);
+        
+        return ResponseEntity.ok(new HasCouponResponse(hasCoupon, couponId, customerInputId));
     }
 
     /**
