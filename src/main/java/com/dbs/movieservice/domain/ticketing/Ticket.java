@@ -33,7 +33,6 @@ public class Ticket {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
             @JoinColumn(name = "seat_id", referencedColumnName = "seat_id", nullable = false),
-            @JoinColumn(name = "theater_id", referencedColumnName = "theater_id", nullable = false)
     })
     private Seat seat;
 

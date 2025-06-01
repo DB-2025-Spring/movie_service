@@ -1,5 +1,6 @@
 package com.dbs.movieservice.repository.theater;
 
+import com.dbs.movieservice.domain.movie.Movie;
 import com.dbs.movieservice.domain.theater.Schedule;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -11,7 +12,7 @@ import java.util.List;
 
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findByScheduleDateAndTheater_TheaterId(LocalDate scheduleDate, Long theaterId);
-
+    List<Schedule> findByScheduleDateAndMovie_MovieId(LocalDate scheduleDate, Long movieId);
     @Query("SELECT s FROM Schedule s " +
             "WHERE s.movie.movieId = :movieId " +
             "AND s.scheduleStartTime BETWEEN :startOfToday AND :endOfTargetDay")

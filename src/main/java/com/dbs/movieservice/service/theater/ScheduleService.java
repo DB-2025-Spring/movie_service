@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ScheduleService {
@@ -76,7 +77,7 @@ public class ScheduleService {
         return cSchedule;
     }
 
-    //시험삼아 Dto로 정의. cgv를 보니, 해당날자 기준, 방영한 영화를 포함해서 다 조회하기에, 금일 기준으로 조회하게 정의했습니다.
+    //cgv를 보니, 해당날자 기준, 방영한 영화를 포함해서 다 조회하기에, 금일 기준으로 조회하게 정의했습니다.
     public List<Schedule> getSchedulesForNext7Days(Long movieId) {
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
         LocalDateTime endOfTargetDay = startOfToday.plusDays(7);
@@ -84,10 +85,25 @@ public class ScheduleService {
         return scheduleRepository.findSchedulesForNext7Days(movieId, startOfToday, endOfTargetDay);
     }
 
-    public Map<Long,Long> getSchedulesFor1Day(LocalDate selectedDate) {
-        List<Schedule> schedulesList =scheduleRepository.findSchedulesByDate(selectedDate);
-        List<Long> scheduleId =  schedulesList.stream().map(Schedule::getScheduleId).toList();
-        return seatAvailableService.countAvailableSeatMap(scheduleId);
+    /**
+     *
+     * @param selectedDate
+     * @param movieId
+     * @return Map<Schedule, LONG>
+     */
+    public Map<Schedule, Long> getSchedulesFor1Day(LocalDate selectedDate,Long movieId) {
+        List<Schedule> schedulesList =scheduleRepository.findByScheduleDateAndMovie_MovieId(selectedDate,movieId);
+        List<Long> scheduleIds = schedulesList.stream().map(Schedule::getScheduleId).toList();
+        Map<Long, Long> countMap = seatAvailableService.countAvailableSeatMap(scheduleIds);
+        // scheduleId → Schedule 객체 매핑용 Map
+        Map<Long, Schedule> scheduleMap = schedulesList.stream()
+                .collect(Collectors.toMap(Schedule::getScheduleId, s -> s));
+        // 최종 Map<Schedule, Long> 생성
+        return countMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        entry -> scheduleMap.get(entry.getKey()),
+                        Map.Entry::getValue
+                ));
     }
 
     // ========== Admin용 추가 메서드들 ==========

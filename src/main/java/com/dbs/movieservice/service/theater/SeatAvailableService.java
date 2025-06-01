@@ -23,7 +23,7 @@ public class SeatAvailableService {
     private final SeatRepository seatRepository;
     private final SeatAvailableRepository seatAvailableRepository;
 
-    public SeatAvailableService(SeatRepository seatRepository,ScheduleRepository scheduleRepository,SeatAvailableRepository seatAvailableRepository) {
+    public SeatAvailableService(SeatRepository seatRepository,SeatAvailableRepository seatAvailableRepository) {
         this.seatRepository = seatRepository;
         this.seatAvailableRepository = seatAvailableRepository;
     }
@@ -44,15 +44,13 @@ public class SeatAvailableService {
             seatAvailable.setId(id);
             seatAvailable.setSchedule(schedule);
             seatAvailable.setSeat(seat);
-            seatAvailable.setIsBooked("f");
+            seatAvailable.setIsBooked("F");
 
             return seatAvailable;
         }).toList();
 
         seatAvailableRepository.saveAll(seatAvailableList);
-    }
-
-//    public void createSeatAvailableForSchedule(Schedule schedule) {
+        //    public void createSeatAvailableForSchedule(Schedule schedule) {
 //        List<Seat> seats = seatRepository.findByTheater_TheaterId(schedule.getTheater().getTheaterId());
 //
 //        int batchSize = 50;
@@ -75,6 +73,9 @@ public class SeatAvailableService {
 //        entityManager.flush();
 //        entityManager.clear();
 //    }
+    }
+
+
 
     public Map<Long, Long> countAvailableSeatMap(List<Long> scheduleIds) {
         List<Object[]> results = seatAvailableRepository.countAvailableSeatsByScheduleIds(scheduleIds);
