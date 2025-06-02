@@ -19,11 +19,11 @@ public class ActorController {
         return actorRepository.save(actor);
     }
 
-    @PutMapping("/{id}")
+ /*   @PutMapping("/{id}")
     public Actor updateActor(@PathVariable Long id, @RequestBody Actor updated) {
         updated.setActorID(id);
         return actorRepository.save(updated);
-    }
+    }*/
 
     @DeleteMapping("/{id}")
     public void deleteActor(@PathVariable Long id) {
