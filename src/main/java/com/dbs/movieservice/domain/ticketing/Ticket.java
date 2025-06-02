@@ -33,7 +33,6 @@ public class Ticket {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
             @JoinColumn(name = "seat_id", referencedColumnName = "seat_id", nullable = false),
-            @JoinColumn(name = "theater_id", referencedColumnName = "theater_id", nullable = false)
     })
     private Seat seat;
 
@@ -44,7 +43,7 @@ public class Ticket {
     private LocalDateTime bookingDatetime;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_id", nullable = false)
+    @JoinColumn(name = "payment_id", nullable = true)
     private Payment payment;
 
     @Column(name = "audience_type", length = 1, nullable = false)

@@ -17,8 +17,10 @@ public class Theater {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "theater_seq")
     @Column(name = "theater_id")
     private Long theaterId;
-    @Column(nullable = false, length = 100, name ="theater_name")
+    
+    @Column(name = "theater_name", nullable = false, length = 100)
     private String theaterName;
-    @Column(nullable = false, name="total_seats")
-    private int totalSeats;
+    
+    @Column(name = "total_seats", nullable = false)
+    private Integer totalSeats;
 }

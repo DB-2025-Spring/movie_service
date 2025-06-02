@@ -16,12 +16,5 @@ public class TheaterController {
         this.theaterService = theaterService;
     }
 
-    @GetMapping("/test-create")
-    public Theater createTestTheater() {
-        Theater theater = new Theater();
-        theater.setTheaterName("테스트관");
-        theater.setTotalSeats(123);
 
-        return theaterService.createTheater(theater);
-    }
 }

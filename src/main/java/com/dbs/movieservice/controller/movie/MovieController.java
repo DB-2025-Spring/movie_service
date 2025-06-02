@@ -32,20 +32,4 @@ public class MovieController {
         return movieRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "영화 없음"));
     }
-
-    @PostMapping
-    public Movie createMovie(@RequestBody Movie movie) {
-        return movieRepository.save(movie);
-    }
-
-    @PutMapping("/{id}")
-    public Movie updateMovie(@PathVariable Long id, @RequestBody Movie movie) {
-        movie.setMovieId(id);
-        return movieRepository.save(movie);
-    }
-
-    @DeleteMapping("/{id}")
-    public void deleteMovie(@PathVariable Long id) {
-        movieRepository.deleteById(id);
-    }
 }
