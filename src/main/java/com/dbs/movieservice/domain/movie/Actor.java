@@ -20,10 +20,8 @@ public class Actor {
 
     @Column(name="actor_name", length = 50)
     private String actorName;
-/*
 
     @OneToMany(mappedBy = "actor", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MovieActor> movieActors = new ArrayList<>();
-*/
 
 }
