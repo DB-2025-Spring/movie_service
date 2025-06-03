@@ -1,6 +1,7 @@
 package com.dbs.movieservice.service.movie;
 
 import com.dbs.movieservice.domain.movie.Movie;
+import com.dbs.movieservice.dto.MovieDto;
 import com.dbs.movieservice.repository.movie.MovieRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,9 +15,47 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional (readOnly = true)
 public class MovieService {
 
     private final MovieRepository movieRepository;
+
+    //영화 키워드 검색
+    public MovieDto getMovieDetail(Long movieId) {
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new RuntimeException("영화를 찾을 수 없습니다."));
+        return new MovieDto(movie);
+    }
+
+    //자동완성 (제목)
+
+    public List<String> getAutoCompleteTitles(String keyword) {
+        return movieRepository.findAutoCompleteTitles(keyword);
+    }
+
+    //최신 영화 목록
+    public List<MovieDto> searchMoviesByKeyword(String keyword) {
+        return movieRepository.searchMoviesByKeyword(keyword)
+                .stream().map(MovieDto::new).toList();
+    }
+
+    //현재 상영작
+    public List<MovieDto> getRecentMovies() {
+        return movieRepository.findAllByOrderByReleaseDateDesc()
+                .stream().map(MovieDto::new).toList();
+    }
+
+    //상영 예정작
+    public List<MovieDto> getNowShowingMovies() {
+        return movieRepository.findNowShowingMovies()
+                .stream().map(MovieDto::new).toList();
+    }
+
+    //영화 상세
+    public List<MovieDto> getUpcomingMovies() {
+        return movieRepository.findUpcomingMovies()
+                .stream().map(MovieDto::new).toList();
+    }
 
     /**
      * 모든 영화 조회

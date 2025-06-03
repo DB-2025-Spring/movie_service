@@ -40,17 +40,11 @@ public class Movie {
     private LocalDate endDate;
     @Column(name = "coo", length = 100)
     private String coo;
-/*
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MovieActor> movieActors = new ArrayList<>();
-
-@OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
-private List<MovieGenre> movieGenres = new ArrayList<>();
-
-@OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
-private List<Review> reviews = new ArrayList<>();
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
 
 
-*/
 
 }
