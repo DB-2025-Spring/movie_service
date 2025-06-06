@@ -1,5 +1,6 @@
 package com.dbs.movieservice.service.theater;
 
+import com.dbs.movieservice.config.exception.BusinessException;
 import com.dbs.movieservice.domain.theater.Schedule;
 import com.dbs.movieservice.domain.theater.Seat;
 import com.dbs.movieservice.domain.theater.SeatAvailable;
@@ -10,6 +11,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockTimeoutException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.PessimisticLockException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -110,16 +112,25 @@ public class SeatAvailableService {
      * @param seats
      * @return
      */
-    public Boolean isAvailableForTicket(Schedule schedule, List<Seat> seats) {
+    public void isAvailableForTicket(Schedule schedule, List<Seat> seats) {
         Long scheduleId = schedule.getScheduleId();
-        int seatCount = seats.size();
         List<Long>seatsId = seats.stream().map(Seat::getSeatId).toList();
 
         try {
             List<SeatAvailable> availableSeats = seatAvailableRepository.findAvailableSeatsForUpdate(scheduleId, seatsId);
-            return availableSeats.size() == seatCount;
+            if (availableSeats.size() != seats.size()) {
+                throw new BusinessException(
+                        "예매하려는 좌석 중 이미 예약된 좌석이 존재합니다.",
+                        HttpStatus.CONFLICT,
+                        "SEAT_ALREADY_BOOKED"
+                );
+            }
         } catch (PessimisticLockException | LockTimeoutException e) {
-            return false;
+            throw new BusinessException(
+                    "좌석 확인 중 다른 트랜잭션에 의해 잠금 충돌이 발생했습니다.",
+                    HttpStatus.LOCKED,
+                    "SEAT_LOCK_CONFLICT"
+            );
         }
     }
 

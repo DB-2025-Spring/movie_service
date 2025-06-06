@@ -54,9 +54,7 @@ public class TicketService {
 //    }
     @Transactional
     public List<Ticket> createTicketForCustomer(Customer customer, Schedule schedule, List<Seat> seats, int adultNumber) {
-        if (!seatAvailableService.isAvailableForTicket(schedule, seats)) {
-            return List.of(); // 실패 시 빈 리스트 반환
-        }
+        seatAvailableService.isAvailableForTicket(schedule, seats);
 
         if (!seatAvailableService.updateAvailableSeat(schedule, seats, "T")) {
             return List.of(); // 실패 시 빈 리스트 반환
