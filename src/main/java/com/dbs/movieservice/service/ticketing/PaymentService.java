@@ -83,4 +83,12 @@ public class PaymentService {
         );
     }
 
+    /**
+     * 고객이 결제한 티켓들에서, 영화를 포함한 정보들을 리턴한다.
+     * @param customer
+     * @return
+     */
+    public List<Payment> getAllPaymentByCustomer(Customer customer) {
+        return paymentRepository.findPaymentsWithTicketsAndMoviesByCustomerIdAndStatus(customer.getCustomerId(),"Approve");
+    }
 }

@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -48,4 +49,6 @@ public class Payment {
     @JoinColumn(name = "card_id", referencedColumnName = "card_id")
     private Card card;
 
+    @OneToMany(mappedBy = "payment", fetch = FetchType.LAZY)
+    private List<Ticket> tickets;
 }
