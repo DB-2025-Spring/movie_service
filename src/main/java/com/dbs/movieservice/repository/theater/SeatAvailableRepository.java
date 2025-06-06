@@ -31,4 +31,19 @@ public interface SeatAvailableRepository extends JpaRepository<SeatAvailable, Se
     @Query("Update SeatAvailable sa Set sa.isBooked =:updateType Where sa.id.scheduleId=:scheduleId and sa.id.seatId In :seatsId")
     int updateIsBook(@Param("updateType")String updateType, @Param("scheduleId")Long scheduleId, @Param("seatsId")List<Long> seatsId);
 
+    /**
+     * countAvailableSea함수 대체. count와 같은 집계함수는 pessimitic_read가 불가능
+     * @param scheduleId
+     * @param seatsId
+     * @return
+     */
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @QueryHints({
+            @QueryHint(name = "javax.persistence.lock.timeout", value = "1000")
+    })
+    @Query("SELECT sa FROM SeatAvailable sa WHERE sa.id.scheduleId = :scheduleId AND sa.id.seatId IN :seatsId AND sa.isBooked = 'F'")
+    List<SeatAvailable> findAvailableSeatsForUpdate(
+            @Param("scheduleId") Long scheduleId,
+            @Param("seatsId") List<Long> seatsId
+    );
 }

@@ -28,6 +28,10 @@ public class SeatAvailableService {
         this.seatAvailableRepository = seatAvailableRepository;
     }
 
+    /**
+     * 스케쥴을 전달받아, sa를 생성
+     * @param schedule
+     */
     public void createSeatAvailableForSchedule(Schedule schedule) {
         Long theaterId = schedule.getTheater().getTheaterId();
 
@@ -76,7 +80,11 @@ public class SeatAvailableService {
     }
 
 
-
+    /**
+     * 영화 상영 일정(id)들을 전달받아, 해당 일정들에 남은 좌석수들을 조회.
+     * @param scheduleIds
+     * @return list<ScheduleId, 남은좌석수>
+     */
     public Map<Long, Long> countAvailableSeatMap(List<Long> scheduleIds) {
         List<Object[]> results = seatAvailableRepository.countAvailableSeatsByScheduleIds(scheduleIds);
 
@@ -87,18 +95,30 @@ public class SeatAvailableService {
                 ));
     }
 
+    /**
+     * 하나의 상영일정에 대해, 사용가능한 좌석들을 검색
+     * @param schedule
+     * @return
+     */
     public List<SeatAvailable> getAvailableSeatForSchedule(Schedule schedule) {
         return seatAvailableRepository.findByScheduleId(schedule.getScheduleId());
     }
 
+    /**
+     *
+     * @param schedule
+     * @param seats
+     * @return
+     */
     public Boolean isAvailableForTicket(Schedule schedule, List<Seat> seats) {
         Long scheduleId = schedule.getScheduleId();
         int seatCount = seats.size();
         List<Long>seatsId = seats.stream().map(Seat::getSeatId).toList();
-//        return seatCount == seatAvailableRepository.countAvailableSeat(scheduleId, seatsId);
-        try{
-            return seatCount == seatAvailableRepository.countAvailableSeat(scheduleId, seatsId);
-        }catch(PessimisticLockException | LockTimeoutException e) {
+
+        try {
+            List<SeatAvailable> availableSeats = seatAvailableRepository.findAvailableSeatsForUpdate(scheduleId, seatsId);
+            return availableSeats.size() == seatCount;
+        } catch (PessimisticLockException | LockTimeoutException e) {
             return false;
         }
     }
