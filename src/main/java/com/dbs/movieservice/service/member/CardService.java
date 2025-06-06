@@ -16,8 +16,8 @@ public class CardService {
     private final CardRepository cardRepository;
 
 
-    public void updateBalance(Card card, int chargeMoney){
-        Card lockedCard = cardRepository.findByCardIdWithLock(card.getCardId());
+    public void updateBalance(Long cardId, int chargeMoney){
+        Card lockedCard = cardRepository.findByCardIdWithLock(cardId);
         if(lockedCard.getBalance() < chargeMoney){
             throw new BusinessException(
                     "잔액이 부족합니다. 현재 잔액: " + lockedCard.getBalance() + ", 요청 금액: " + chargeMoney,
