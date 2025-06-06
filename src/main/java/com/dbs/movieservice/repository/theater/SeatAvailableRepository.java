@@ -20,6 +20,12 @@ public interface SeatAvailableRepository extends JpaRepository<SeatAvailable, Se
     @Query("SELECT sa FROM SeatAvailable sa WHERE sa.id.scheduleId = :scheduleId AND sa.isBooked='F'")
     List<SeatAvailable> findByScheduleId(@Param("scheduleId") Long scheduleId);
 
+    /**
+     * 기존에 사용했던 코드. 비관적 locking이 걸리지 않기떄문에 사용하지 않음.
+     * @param scheduleId
+     * @param seatsId
+     * @return
+     */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints({
             @QueryHint(name = "javax.persistence.lock.timeout", value = "1000")  // 밀리초 단위
