@@ -43,7 +43,7 @@ public interface SeatAvailableRepository extends JpaRepository<SeatAvailable, Se
      * @param seatsId
      * @return
      */
-    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints({
             @QueryHint(name = "javax.persistence.lock.timeout", value = "1000")
     })

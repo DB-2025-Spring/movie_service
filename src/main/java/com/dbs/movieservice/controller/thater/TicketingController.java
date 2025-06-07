@@ -21,10 +21,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -148,6 +145,27 @@ public class TicketingController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
         }
+    }
+
+    @GetMapping("/paymentTest")
+    public ResponseEntity<?> paymentTest() {
+        Customer customer = new Customer();
+        customer.setCustomerId(1L);
+        List<Payment> payments= paymentService.getAllPaymentByCustomer(customer);
+
+        System.out.println(payments);
+        System.out.println("////////");
+        for(Payment payment:payments){
+            System.out.println("////");
+            System.out.println(payment.getPaymentId());
+            List<Ticket> tickets = payment.getTickets();
+            for(Ticket ticket:tickets){
+                System.out.println("////ticket");
+                System.out.println(ticket.getTicketId());
+                System.out.println(ticket.getSchedule().getMovie().getMovieName());
+            }
+        }
+       return ResponseEntity.ok("good");
     }
 
     /**

@@ -5,7 +5,9 @@ import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
+import org.springframework.data.repository.query.Param;
 
 public interface CardRepository extends JpaRepository<Card, Long> {
     /**
@@ -16,12 +18,13 @@ public interface CardRepository extends JpaRepository<Card, Long> {
      * 3. b가 도착해서 유효함을 검사(read락만 걸려있기에 검사가능)
      * 4. b 트랜젝션도 유효함을 감지
      * 5. 둘 다 실행해서 오류 발생.
-     * @param cardNumber
+     * @param cardId
      * @return
      */
-    @Lock(LockModeType.WRITE)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM Card c WHERE c.cardId = :cardId")
     @QueryHints({
             @QueryHint(name = "javax.persistence.lock.timeout", value = "5000")
     })
-    Card findByCardIdWithLock(Long cardNumber);
+    Card findByCardIdWithLock(@Param("cardId") Long cardId);
 }

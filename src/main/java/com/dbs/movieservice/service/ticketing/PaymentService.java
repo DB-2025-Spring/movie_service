@@ -38,13 +38,13 @@ public class PaymentService {
             }
         //포인트 감소 서비스 호출
 
-        try {
-            cardService.updateBalance(card.getCardId(), paymentAmount);
-        } catch (BusinessException e) {
-            Payment payment =  savePayment(customer,card,usePoint,disCountAmount,paymentAmount,"Failed");
-            paymentRepository.save(payment);
-            return payment;
-        }
+//        try {
+//            cardService.updateBalance(card.getCardId(), paymentAmount);
+//        } catch (BusinessException e) {
+//            Payment payment =  savePayment(customer,card,usePoint,disCountAmount,paymentAmount,"Failed");
+//            paymentRepository.save(payment);
+//            return payment;
+//        }
         Payment payment =  savePayment(customer,card,usePoint,disCountAmount,paymentAmount,"Approve");
         paymentRepository.flush();
         ticketService.confirmPaymentForTicket(tickets, payment);
