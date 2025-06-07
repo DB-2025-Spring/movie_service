@@ -9,6 +9,7 @@ import com.dbs.movieservice.domain.theater.Schedule;
 import com.dbs.movieservice.domain.theater.Seat;
 import com.dbs.movieservice.domain.theater.Theater;
 import com.dbs.movieservice.domain.ticketing.Coupon;
+import com.dbs.movieservice.dto.GenreDto;
 import com.dbs.movieservice.service.member.ClientLevelService;
 import com.dbs.movieservice.service.movie.ActorService;
 import com.dbs.movieservice.service.movie.GenreService;
@@ -206,8 +207,8 @@ public class AdminController {
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<List<Genre>> getAllGenres() {
-        List<Genre> genres = genreService.findAllGenres();
+    public ResponseEntity<List<GenreDto>> getAllGenres() {
+        List<GenreDto> genres = genreService.findAllGenres();
         return ResponseEntity.ok(genres);
     }
 

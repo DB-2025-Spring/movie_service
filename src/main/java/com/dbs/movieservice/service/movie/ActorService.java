@@ -1,7 +1,13 @@
 package com.dbs.movieservice.service.movie;
 
 import com.dbs.movieservice.domain.movie.Actor;
+import com.dbs.movieservice.domain.movie.Movie;
+import com.dbs.movieservice.domain.movie.MovieActor;
+import com.dbs.movieservice.dto.ActorDto;
+import com.dbs.movieservice.dto.MovieDto;
 import com.dbs.movieservice.repository.movie.ActorRepository;
+import com.dbs.movieservice.repository.movie.MovieActorRepository;
+import com.dbs.movieservice.repository.movie.MovieRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,6 +22,28 @@ import java.util.Optional;
 public class ActorService {
 
     private final ActorRepository actorRepository;
+    private final MovieActorRepository movieActorRepository;
+
+    // 배우 이름으로 검색
+    @Transactional(readOnly = true)
+    public List<ActorDto> searchActorsByName(String actorName) {
+        return actorRepository.findByActorName(actorName)
+                .stream()
+                .map(ActorDto::new)
+                .toList();
+    }
+
+    // 해당 배우의 출연 영화 조회
+    @Transactional(readOnly = true)
+    public List<MovieDto> findMoviesByActor(Long actorId) {
+        List<MovieActor> links = movieActorRepository.findByActor_ActorId(actorId);
+        return links.stream()
+                .map(MovieActor::getMovie)
+                .map(MovieDto::new)
+                .toList();
+    }
+
+
 
     /**
      * 모든 배우 조회
