@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -101,5 +102,19 @@ public class PaymentService {
      */
     public List<Payment> getAllPaymentByCustomer(Customer customer) {
         return paymentRepository.findPaymentsWithTicketsAndMoviesByCustomerIdAndStatus(customer.getCustomerId(),"Approve");
+    }
+
+    /**
+     * 이 함수를 ticket service에 넣게 되면 순환오류가 발생
+     * @param customer
+     * @return
+     */
+    public List<Ticket> getAllTicketsByCustomerId(Customer customer) {
+        List<Payment> payments = getAllPaymentByCustomer(customer);
+        List<Ticket> tickets = new ArrayList<>();
+        for (Payment payment : payments) {
+            tickets.addAll(payment.getTickets());
+        }
+        return tickets;
     }
 }
