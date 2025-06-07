@@ -19,9 +19,12 @@ import java.util.List;
 public class TicketService {
     private final TicketRepository ticketRepository;
     private final SeatAvailableService seatAvailableService;
-    public TicketService(TicketRepository ticketRepository, SeatAvailableService seatAvailableService) {
+    private final PaymentService paymentService;
+
+    public TicketService(TicketRepository ticketRepository, SeatAvailableService seatAvailableService, PaymentService paymentService) {
         this.ticketRepository = ticketRepository;
         this.seatAvailableService = seatAvailableService;
+        this.paymentService = paymentService;
     }
 
 //    @Transactional
@@ -52,11 +55,18 @@ public class TicketService {
 //        };
 //        return true;
 //    }
+
+    /**
+     * 고객에게 임시 티켓 발급
+     * @param customer
+     * @param schedule
+     * @param seats
+     * @param adultNumber
+     * @return
+     */
     @Transactional
     public List<Ticket> createTicketForCustomer(Customer customer, Schedule schedule, List<Seat> seats, int adultNumber) {
-        if (!seatAvailableService.isAvailableForTicket(schedule, seats)) {
-            return List.of(); // 실패 시 빈 리스트 반환
-        }
+        seatAvailableService.isAvailableForTicket(schedule, seats);
 
         if (!seatAvailableService.updateAvailableSeat(schedule, seats, "T")) {
             return List.of(); // 실패 시 빈 리스트 반환
@@ -88,6 +98,11 @@ public class TicketService {
         return createdTickets;
     }
 
+    /**
+     * 결제성공 시, ticket에 payment를 부여
+     * @param tickets
+     * @param payment
+     */
     public void confirmPaymentForTicket(List<Ticket> tickets, Payment payment){
         tickets.forEach(ticket->{
             ticket.setPayment(payment);
@@ -127,7 +142,6 @@ public class TicketService {
         ticketRepository.deleteAll(tickets);
     }
 
-
     public int countCustomerTicket(Payment payment) {
         return ticketRepository.countByPayment(payment);
     }
@@ -151,5 +165,14 @@ public class TicketService {
         if (hasInvalidOwner) {
             throw new RuntimeException("티켓에 대한 접근 권한이 없습니다.");
         }
+    }
+
+    public List<Ticket> getAllTicketsByCustomerId(Customer customer) {
+        List<Payment> payments = paymentService.getAllPaymentByCustomer(customer);
+        List<Ticket> tickets = new ArrayList<>();
+        for (Payment payment : payments) {
+            tickets.addAll(payment.getTickets());
+        }
+        return tickets;
     }
 }

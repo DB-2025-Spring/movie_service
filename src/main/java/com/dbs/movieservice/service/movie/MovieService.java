@@ -1,16 +1,20 @@
 package com.dbs.movieservice.service.movie;
 
+import com.dbs.movieservice.domain.member.Customer;
 import com.dbs.movieservice.domain.movie.Movie;
+import com.dbs.movieservice.domain.ticketing.Payment;
+import com.dbs.movieservice.domain.ticketing.Ticket;
 import com.dbs.movieservice.dto.MovieDto;
 import com.dbs.movieservice.repository.movie.MovieRepository;
+import com.dbs.movieservice.service.ticketing.PaymentService;
+import com.dbs.movieservice.service.ticketing.TicketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +23,8 @@ import java.util.Optional;
 public class MovieService {
 
     private final MovieRepository movieRepository;
+    private final PaymentService paymentService;
+    private final TicketService ticketService;
 
     //영화 키워드 검색
     public MovieDto getMovieDetail(Long movieId) {
@@ -114,5 +120,34 @@ public class MovieService {
             throw new RuntimeException("영화를 찾을 수 없습니다: " + movieId);
         }
         movieRepository.deleteById(movieId);
+    }
+
+    /**
+     * 
+     * @param customer
+     * @return 유저가 본 영화 리스트를 전부 조회 (이때, Movie객체는 세세한 정보가 다 들어있음.
+     */
+    public Set<Movie> findMovieByCustomer(Customer customer) {
+        List<Ticket> userTicketList = ticketService.getAllTicketsByCustomerId(customer);
+        Set<Movie> userMovieList = new HashSet<>();
+        for(Ticket ticket : userTicketList) {
+            userMovieList.add(ticket.getSchedule().getMovie());
+        }
+        return userMovieList;
+    }
+
+    /**
+     * 
+     * @param customer
+     * @param movie
+     * @return 유저가 해당 영화를 관람했는지 검사
+     */
+    public boolean checkCustomerWatchedMovie(Customer customer, Movie movie) {
+        Set<Movie> userMovieList = findMovieByCustomer(customer);
+        for(Movie movie1 : userMovieList) {
+            if(movie1.getMovieId().equals(movie.getMovieId()))
+                return true;
+        }
+        return false;
     }
 } 

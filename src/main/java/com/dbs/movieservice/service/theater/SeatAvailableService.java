@@ -1,5 +1,6 @@
 package com.dbs.movieservice.service.theater;
 
+import com.dbs.movieservice.config.exception.BusinessException;
 import com.dbs.movieservice.domain.theater.Schedule;
 import com.dbs.movieservice.domain.theater.Seat;
 import com.dbs.movieservice.domain.theater.SeatAvailable;
@@ -10,6 +11,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockTimeoutException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.PessimisticLockException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,6 +30,10 @@ public class SeatAvailableService {
         this.seatAvailableRepository = seatAvailableRepository;
     }
 
+    /**
+     * 스케쥴을 전달받아, sa를 생성
+     * @param schedule
+     */
     public void createSeatAvailableForSchedule(Schedule schedule) {
         Long theaterId = schedule.getTheater().getTheaterId();
 
@@ -76,7 +82,11 @@ public class SeatAvailableService {
     }
 
 
-
+    /**
+     * 영화 상영 일정(id)들을 전달받아, 해당 일정들에 남은 좌석수들을 조회.
+     * @param scheduleIds
+     * @return list<ScheduleId, 남은좌석수>
+     */
     public Map<Long, Long> countAvailableSeatMap(List<Long> scheduleIds) {
         List<Object[]> results = seatAvailableRepository.countAvailableSeatsByScheduleIds(scheduleIds);
 
@@ -87,19 +97,40 @@ public class SeatAvailableService {
                 ));
     }
 
+    /**
+     * 하나의 상영일정에 대해, 사용가능한 좌석들을 검색
+     * @param schedule
+     * @return
+     */
     public List<SeatAvailable> getAvailableSeatForSchedule(Schedule schedule) {
         return seatAvailableRepository.findByScheduleId(schedule.getScheduleId());
     }
 
-    public Boolean isAvailableForTicket(Schedule schedule, List<Seat> seats) {
+    /**
+     *
+     * @param schedule
+     * @param seats
+     * @return
+     */
+    public void isAvailableForTicket(Schedule schedule, List<Seat> seats) {
         Long scheduleId = schedule.getScheduleId();
-        int seatCount = seats.size();
         List<Long>seatsId = seats.stream().map(Seat::getSeatId).toList();
-//        return seatCount == seatAvailableRepository.countAvailableSeat(scheduleId, seatsId);
-        try{
-            return seatCount == seatAvailableRepository.countAvailableSeat(scheduleId, seatsId);
-        }catch(PessimisticLockException | LockTimeoutException e) {
-            return false;
+
+        try {
+            List<SeatAvailable> availableSeats = seatAvailableRepository.findAvailableSeatsForUpdate(scheduleId, seatsId);
+            if (availableSeats.size() != seats.size()) {
+                throw new BusinessException(
+                        "예매하려는 좌석 중 이미 예약된 좌석이 존재합니다.",
+                        HttpStatus.CONFLICT,
+                        "SEAT_ALREADY_BOOKED"
+                );
+            }
+        } catch (PessimisticLockException | LockTimeoutException e) {
+            throw new BusinessException(
+                    "좌석 확인 중 다른 트랜잭션에 의해 잠금 충돌이 발생했습니다.",
+                    HttpStatus.LOCKED,
+                    "SEAT_LOCK_CONFLICT"
+            );
         }
     }
 

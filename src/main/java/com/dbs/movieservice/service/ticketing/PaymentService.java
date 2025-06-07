@@ -1,10 +1,12 @@
 package com.dbs.movieservice.service.ticketing;
 
+import com.dbs.movieservice.config.exception.BusinessException;
 import com.dbs.movieservice.domain.member.Card;
 import com.dbs.movieservice.domain.member.Customer;
 import com.dbs.movieservice.domain.ticketing.Payment;
 import com.dbs.movieservice.domain.ticketing.Ticket;
 import com.dbs.movieservice.repository.ticketing.PaymentRepository;
+import com.dbs.movieservice.service.member.CardService;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -16,9 +18,12 @@ import java.util.List;
 public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final TicketService ticketService;
-    public PaymentService(TicketService ticketService, PaymentRepository paymentRepository) {
+    private final CardService cardService;
+
+    public PaymentService(TicketService ticketService, PaymentRepository paymentRepository, CardService cardService) {
         this.ticketService = ticketService;
         this.paymentRepository = paymentRepository;
+        this.cardService = cardService;
     }
 
     @Transactional
@@ -32,9 +37,15 @@ public class PaymentService {
                 throw new RuntimeException("Payment amount is negative");
             }
         //포인트 감소 서비스 호출
-        //카드 잔액 감소 서비스 호출
 
-        Payment payment =  savePayment(customer,card,usePoint,disCountAmount,paymentAmount);
+//        try {
+//            cardService.updateBalance(card.getCardId(), paymentAmount);
+//        } catch (BusinessException e) {
+//            Payment payment =  savePayment(customer,card,usePoint,disCountAmount,paymentAmount,"Failed");
+//            paymentRepository.save(payment);
+//            return payment;
+//        }
+        Payment payment =  savePayment(customer,card,usePoint,disCountAmount,paymentAmount,"Approve");
         paymentRepository.flush();
         ticketService.confirmPaymentForTicket(tickets, payment);
         //총 결제 금액에 대해 customer의 포인트 증가 서비스 호출
@@ -59,7 +70,7 @@ public class PaymentService {
         return targetPayment;
     }
 
-    public Payment savePayment(Customer customer, Card card, int usePoint, int disCountAmount, int paymentAmount) {
+    public Payment savePayment(Customer customer, Card card, int usePoint, int disCountAmount, int paymentAmount,String paymentStatus) {
         Payment payment = new Payment();
         payment.setCustomer(customer);
         payment.setPaymentAmount(paymentAmount);
@@ -68,7 +79,7 @@ public class PaymentService {
         payment.setDiscountAmount(disCountAmount);
         payment.setUsedPoints(usePoint);
         payment.setApprovalNumber(1);
-        payment.setPaymentStatus("Approve");
+        payment.setPaymentStatus(paymentStatus);
         return paymentRepository.save(payment);
     }
 
@@ -83,4 +94,12 @@ public class PaymentService {
         );
     }
 
+    /**
+     * 고객이 결제한 티켓들에서, 영화를 포함한 정보들을 리턴한다.
+     * @param customer
+     * @return
+     */
+    public List<Payment> getAllPaymentByCustomer(Customer customer) {
+        return paymentRepository.findPaymentsWithTicketsAndMoviesByCustomerIdAndStatus(customer.getCustomerId(),"Approve");
+    }
 }
