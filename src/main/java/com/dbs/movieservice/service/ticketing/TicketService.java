@@ -19,9 +19,12 @@ import java.util.List;
 public class TicketService {
     private final TicketRepository ticketRepository;
     private final SeatAvailableService seatAvailableService;
-    public TicketService(TicketRepository ticketRepository, SeatAvailableService seatAvailableService) {
+    private final PaymentService paymentService;
+
+    public TicketService(TicketRepository ticketRepository, SeatAvailableService seatAvailableService, PaymentService paymentService) {
         this.ticketRepository = ticketRepository;
         this.seatAvailableService = seatAvailableService;
+        this.paymentService = paymentService;
     }
 
 //    @Transactional
@@ -164,5 +167,12 @@ public class TicketService {
         }
     }
 
-
+    public List<Ticket> getAllTicketsByCustomerId(Customer customer) {
+        List<Payment> payments = paymentService.getAllPaymentByCustomer(customer);
+        List<Ticket> tickets = new ArrayList<>();
+        for (Payment payment : payments) {
+            tickets.addAll(payment.getTickets());
+        }
+        return tickets;
+    }
 }
