@@ -7,10 +7,12 @@ import com.dbs.movieservice.domain.ticketing.Payment;
 import com.dbs.movieservice.domain.ticketing.Ticket;
 import com.dbs.movieservice.repository.ticketing.PaymentRepository;
 import com.dbs.movieservice.service.member.CardService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -101,5 +103,53 @@ public class PaymentService {
      */
     public List<Payment> getAllPaymentByCustomer(Customer customer) {
         return paymentRepository.findPaymentsWithTicketsAndMoviesByCustomerIdAndStatus(customer.getCustomerId(),"Approve");
+    }
+
+    /**
+     * 이 함수를 ticket service에 넣게 되면 순환오류가 발생
+     * @param customer
+     * @return
+     */
+    public List<Ticket> getAllTicketsByCustomerId(Customer customer) {
+        List<Payment> payments = getAllPaymentByCustomer(customer);
+        List<Ticket> tickets = new ArrayList<>();
+        for (Payment payment : payments) {
+            tickets.addAll(payment.getTickets());
+        }
+        return tickets;
+    }
+
+    //todo 토스페이먼트 사용(2단계로 나눠 구현)
+    /**
+     * 토스 페이먼트를 쓰기 위해 구현하는 메소드
+     */
+    @Transactional
+    public Payment createPendingPayment(Customer customer, List<Ticket> tickets, Card card, int usePoint, int disCountAmount) {
+        int amountValue = tickets.stream().mapToInt(ticket ->
+                "A".equals(ticket.getAudienceType()) ? 10000 : 8000).sum();
+        int paymentAmount = amountValue - disCountAmount - usePoint;
+        if (paymentAmount < 0) {
+            throw new RuntimeException("Payment amount is negative");
+        }
+        Payment pendingPayment = savePayment(customer, card, usePoint, disCountAmount, paymentAmount, "Pending");
+        ticketService.confirmPaymentForTicket(tickets, pendingPayment);
+        paymentRepository.flush();
+        return pendingPayment;
+    }
+
+    @Transactional
+    public Payment approvePayment(String paymentKey, Long orderId) {
+        Payment payment = paymentRepository.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("결제 정보가 없습니다."));
+
+        payment.setPaymentKey(paymentKey); // 저장 필요
+        payment.setPaymentStatus("Approve");
+        paymentRepository.flush();
+
+
+        int customerTicketCount = countCustomerTicket(payment.getCustomer());
+        // 등급 서비스 호출 등
+        //총 결제 금액에 대해 customer의 포인트 증가 서비스 호출
+        return payment;
     }
 }

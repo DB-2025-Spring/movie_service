@@ -24,7 +24,6 @@ public class MovieService {
 
     private final MovieRepository movieRepository;
     private final PaymentService paymentService;
-    private final TicketService ticketService;
 
     //영화 키워드 검색
     public MovieDto getMovieDetail(Long movieId) {
@@ -123,12 +122,12 @@ public class MovieService {
     }
 
     /**
-     * 
+     *
      * @param customer
      * @return 유저가 본 영화 리스트를 전부 조회 (이때, Movie객체는 세세한 정보가 다 들어있음.
      */
     public Set<Movie> findMovieByCustomer(Customer customer) {
-        List<Ticket> userTicketList = ticketService.getAllTicketsByCustomerId(customer);
+        List<Ticket> userTicketList = paymentService.getAllTicketsByCustomerId(customer);
         Set<Movie> userMovieList = new HashSet<>();
         for(Ticket ticket : userTicketList) {
             userMovieList.add(ticket.getSchedule().getMovie());
@@ -137,7 +136,7 @@ public class MovieService {
     }
 
     /**
-     * 
+     *
      * @param customer
      * @param movie
      * @return 유저가 해당 영화를 관람했는지 검사
