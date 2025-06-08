@@ -46,6 +46,7 @@ public class SecurityConfig {
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                     //Seat Parser
                     .requestMatchers("/seat-system/parse-seat-ids").permitAll()
+                    .requestMatchers("/seat-system/parse-seat-cols-rows").permitAll()
                 // Authenticated user endpoints
                 .anyRequest().authenticated()
             )
