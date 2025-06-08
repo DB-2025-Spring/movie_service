@@ -40,7 +40,7 @@ public class ScheduleController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "스케줄 목록 조회 성공",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Schedule.class)))),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ScheduleDto.class)))),
             @ApiResponse(responseCode = "204", description = "조회된 스케줄이 없음"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청"),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
@@ -68,7 +68,7 @@ public class ScheduleController {
             @ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(
                             mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ScheduleSeatCountResponse.class))
+                            array = @ArraySchema(schema = @Schema(implementation = ScheduleSeatCountDto.class))
                     )),
             @ApiResponse(responseCode = "204", description = "조회된 스케줄이 없음"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터"),
