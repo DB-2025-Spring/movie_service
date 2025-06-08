@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -106,5 +107,20 @@ public class SeatService {
         theater.setTotalSeats(theater.getTotalSeats() - 1);
         
         seatRepository.deleteById(seatId);
+    }
+
+    public Seat parseColRowToId(Theater theater, Integer rowNumber, Integer columnNumber) {
+        return seatRepository.findByTheaterAndRowNumberAndColumnNumber(theater,rowNumber,columnNumber);
+    }
+
+    public List<Seat> praseIdstoColRow(List<Seat> seat){
+        List<Seat> seats = new ArrayList<>();
+        for(Seat s : seat){
+            Seat tempSeat = seatRepository.findById(s.getSeatId()).orElse(null);
+            if(tempSeat != null){
+                seats.add(tempSeat);
+            }
+        }
+        return seats;
     }
 }
