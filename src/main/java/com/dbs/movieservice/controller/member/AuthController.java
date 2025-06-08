@@ -44,6 +44,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -290,12 +292,17 @@ public class AuthController {
         
         boolean isDuplicate = customerService.checkDuplicateCustomerId(customerInputId);
         
+        // JSON 객체로 응답하기 위해 Map 사용
+        Map<String, Object> response = new HashMap<>();
+        
         if (isDuplicate) {
-            return ResponseEntity.ok()
-                    .body("{\"available\": false, \"message\": \"Username is already taken\"}");
+            response.put("available", false);
+            response.put("message", "Username is already taken");
         } else {
-            return ResponseEntity.ok()
-                    .body("{\"available\": true, \"message\": \"Username is available\"}");
+            response.put("available", true);
+            response.put("message", "Username is available");
         }
+        
+        return ResponseEntity.ok(response);
     }
 } 
