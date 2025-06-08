@@ -10,10 +10,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -23,9 +20,9 @@ import java.util.Map;
 
 @RestController
 public class temp {
-//    @Value("${toss.secret-key}")
+    @Value("${toss.secret-key}")
     private String secretKey;
-    @PostMapping("/success")
+    @RequestMapping(value = "/success", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<String> confirmPayment(@RequestParam String paymentKey,
                                                  @RequestParam String orderId,
                                                  @RequestParam Long amount) {

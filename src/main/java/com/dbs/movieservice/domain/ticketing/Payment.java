@@ -45,6 +45,9 @@ public class Payment {
     @Column(name = "used_points")
     private Integer usedPoints;
 
+    @Column(name = "payment_key", length = 255, nullable = true)
+    private String paymentKey;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "card_id", referencedColumnName = "card_id")
     private Card card;
