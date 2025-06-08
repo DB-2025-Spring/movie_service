@@ -2,6 +2,7 @@ package com.dbs.movieservice.service.theater;
 
 import com.dbs.movieservice.domain.movie.Movie;
 import com.dbs.movieservice.domain.theater.Schedule;
+import com.dbs.movieservice.domain.theater.Seat;
 import com.dbs.movieservice.domain.theater.Theater;
 import com.dbs.movieservice.repository.movie.MovieRepository;
 import com.dbs.movieservice.repository.theater.ScheduleRepository;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,11 +27,14 @@ public class ScheduleService {
     private final TheaterRepository theaterRepository;
     private final MovieRepository movieRepository;
     private final SeatAvailableService seatAvailableService;
-    public ScheduleService(ScheduleRepository scheduleRepository, TheaterRepository theaterRepository, MovieRepository movieRepository, SeatAvailableService seatAvailableService) {
+    private final SeatService seatService;
+
+    public ScheduleService(ScheduleRepository scheduleRepository, TheaterRepository theaterRepository, MovieRepository movieRepository, SeatAvailableService seatAvailableService, SeatService seatService) {
         this.scheduleRepository = scheduleRepository;
         this.theaterRepository = theaterRepository;
         this.movieRepository = movieRepository;
         this.seatAvailableService = seatAvailableService;
+        this.seatService = seatService;
     }
 
     //이 메소드는 아직, 다음날에 있는 상영일정은 고려 안함. 추후 수정하겠습니다.
@@ -188,6 +193,16 @@ public class ScheduleService {
             throw new RuntimeException("상영일정을 찾을 수 없습니다: " + scheduleId);
         }
         scheduleRepository.deleteById(scheduleId);
+    }
+
+    public List<Long> parseSeatBySchedule(Schedule schedule, List<Seat> seats) {
+        Schedule getSchedule = scheduleRepository.findById(schedule.getScheduleId()).orElseThrow();
+        Theater theater = getSchedule.getTheater();
+        List<Long> seatsId = new ArrayList<>();
+        for (Seat seat : seats) {
+            seatsId.add(seatService.parseColRowToId(theater, seat.getRowNumber(), seat.getColumnNumber()).getSeatId());
+        }
+        return seatsId;
     }
 }
 
