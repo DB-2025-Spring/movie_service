@@ -74,7 +74,7 @@ public class PaymentController {
         }
     }
 
-
+    //todo cancel할때 권한조회 하기
     @PostMapping("/cancel")
     public ResponseEntity<String> cancelPayment(@RequestParam Long paymentId) {
         // 1. paymentId로 결제 정보 조회 (결제 상태 등 확인)

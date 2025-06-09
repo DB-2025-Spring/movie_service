@@ -24,6 +24,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -48,7 +50,7 @@ public class TicketingController {
             @ApiResponse(responseCode = "200", description = "티켓 생성 성공",
                     content = @Content(
                             mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = Ticket.class))
+                            array = @ArraySchema(schema = @Schema(implementation = TicketResponseDTO.class))
                     )),
             @ApiResponse(responseCode = "409", description = "좌석이 이미 선점되어 티켓 생성 실패"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터 (예: 좌석 ID 또는 스케줄 ID가 없음)"),
@@ -71,8 +73,32 @@ public class TicketingController {
             if (tickets.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("이미 예약된 좌석입니다."); // 좌석 중복 등 실패
             }
-            return ResponseEntity.ok(tickets);
+            return ResponseEntity.ok(tickets.stream()
+                    .map(ticket -> new TicketResponseDTO(
+                            ticket.getTicketId(),
+                            ticket.getSeat().getSeatId(),
+                            ticket.getAudienceType(),
+                            ticket.getBookingDatetime(),
+                            ticket.getSchedule().getScheduleId(),
+                            ticket.getPayment() != null ? ticket.getPayment().getPaymentId() : null
+                    ))
+                    .toList());
     }
+
+    /**
+     * create-ticket의 response Dto
+     */
+    @Data
+    @AllArgsConstructor
+    public static class TicketResponseDTO {
+        private Long ticketId;
+        private Long seatId;
+        private String audienceType;
+        private LocalDateTime bookingDatetime;
+        private Long scheduleId;
+        private Long paymentId;
+    }
+
 
     @PostMapping("/create-payment")
     @Operation(
@@ -81,7 +107,7 @@ public class TicketingController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "결제 생성 성공",
-                    content = @Content(schema = @Schema(implementation = Payment.class))),
+                    content = @Content(schema = @Schema(implementation = PaymentResponseDTO.class))),
             @ApiResponse(responseCode = "400", description = "결제 실패 (예: 포인트 부족, 결제 금액 음수)",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
@@ -102,13 +128,40 @@ public class TicketingController {
                     request.getUsePoint(),
                     request.getDiscountAmount()
             );
-
-            return ResponseEntity.ok(payment);
+            PaymentResponseDTO response = new PaymentResponseDTO(
+                    payment.getPaymentId(),
+                    payment.getPaymentAmount(),
+                    payment.getPaymentMethod(),
+                    payment.getApprovalNumber(),
+                    payment.getPaymentStatus(),
+                    payment.getPaymentDate(),
+                    payment.getDiscountAmount(),
+                    payment.getUsedPoints(),
+                    payment.getPaymentKey()
+            );
+            return ResponseEntity.ok(response);
 
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
                     .body(new ErrorResponse(e.getMessage()));
         }
+    }
+
+    /**
+     * createpayment의 response용 DTO
+     */
+    @Data
+    @AllArgsConstructor
+    public static class PaymentResponseDTO {
+        private Long paymentId;
+        private Integer paymentAmount;
+        private String paymentMethod;
+        private Integer approvalNumber;
+        private String paymentStatus;
+        private LocalDate paymentDate;
+        private Integer discountAmount;
+        private Integer usedPoints;
+        private String paymentKey;
     }
 
 
