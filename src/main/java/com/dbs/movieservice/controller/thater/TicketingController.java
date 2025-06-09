@@ -37,7 +37,7 @@ public class TicketingController {
     private final CustomerService customerService;
 
 //    String customerInputId = SecurityUtils.getCurrentCustomerInputId();
-
+    //todo DTO로 response
 
     @PostMapping("/create-temporal-ticket")
     @Operation(
@@ -99,7 +99,6 @@ public class TicketingController {
             Payment payment = paymentService.createPayment(
                     customer,
                     tickets,
-                    card,
                     request.getUsePoint(),
                     request.getDiscountAmount()
             );
@@ -197,7 +196,7 @@ public class TicketingController {
                                     .theater(ticket.getSchedule().getTheater().getTheaterName())
                                     .seatNumber(ticket.getSeat().getRowNumber() + "-" + ticket.getSeat().getColumnNumber())
                                     .totalPrice(payment.getPaymentAmount())
-                                    .paymentMethod(payment.getCard().getCardCompany())
+                                    .paymentMethod(payment.getPaymentMethod())
                                     .status("예매완료") // paymentCancel 필드가 없으므로 기본값
                                     .bookingDate(payment.getPaymentDate().toString())
                                     .bookingNumber("TKT" + payment.getPaymentId())

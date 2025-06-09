@@ -65,8 +65,7 @@ public class TicketService {
     @Transactional
     public List<Ticket> createTicketForCustomer(Customer customer, Schedule schedule, List<Seat> seats, int adultNumber) {
         seatAvailableService.isAvailableForTicket(schedule, seats);
-
-        if (!seatAvailableService.updateAvailableSeat(schedule, seats, "T")) {
+        if (!seatAvailableService.updateAvailableSeat(schedule, seats, "H")) {
             return List.of(); // 실패 시 빈 리스트 반환
         }
 
@@ -87,7 +86,7 @@ public class TicketService {
                 tempTicket.setAudienceType("Y");
             }
 
-            tempTicket.setIsIssued("T");
+            tempTicket.setIsIssued("F");
             tempTicket.setBookingDatetime(LocalDateTime.now());
             tempTicket.setPayment(null);
             Ticket saved = ticketRepository.save(tempTicket); // 저장된 Ticket 받기
@@ -104,7 +103,15 @@ public class TicketService {
     public void confirmPaymentForTicket(List<Ticket> tickets, Payment payment){
         tickets.forEach(ticket->{
             ticket.setPayment(payment);
+            ticket.setIsIssued("T");
             seatAvailableService.updateAvailableSeat(ticket.getSchedule(), List.of(ticket.getSeat()),"T");
+        });
+        ticketRepository.saveAll(tickets);
+    }
+    public void holdPaymentForTicket(List<Ticket> tickets, Payment payment){
+        tickets.forEach(ticket->{
+            ticket.setPayment(payment);
+            ticket.setIsIssued("H");
         });
         ticketRepository.saveAll(tickets);
     }

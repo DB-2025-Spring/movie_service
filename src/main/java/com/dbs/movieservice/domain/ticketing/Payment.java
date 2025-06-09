@@ -48,10 +48,6 @@ public class Payment {
     @Column(name = "payment_key", length = 255, nullable = true)
     private String paymentKey;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "card_id", referencedColumnName = "card_id")
-    private Card card;
-
     @OneToMany(mappedBy = "payment", fetch = FetchType.LAZY)
     private List<Ticket> tickets;
 }
