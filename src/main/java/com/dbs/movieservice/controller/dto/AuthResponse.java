@@ -22,12 +22,22 @@ public class AuthResponse {
     @Schema(description = "사용자 ID", example = "testuser")
     private String customerInputId;
     
+    @Schema(description = "사용자 이름", example = "홍길동")
+    private String customerName;
+    
     @Schema(description = "사용자 권한", example = "MEMBER")
     private String authority;
     
     public AuthResponse(String token, String customerInputId, String authority) {
         this.token = token;
         this.customerInputId = customerInputId;
+        this.authority = authority;
+    }
+    
+    public AuthResponse(String token, String customerInputId, String customerName, String authority) {
+        this.token = token;
+        this.customerInputId = customerInputId;
+        this.customerName = customerName;
         this.authority = authority;
     }
 } 

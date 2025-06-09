@@ -4,12 +4,15 @@ import com.dbs.movieservice.dto.ReviewCreateRequest;
 import com.dbs.movieservice.dto.ReviewDto;
 import com.dbs.movieservice.dto.ReviewUpdateRequest;
 import com.dbs.movieservice.service.movie.ReviewService;
+import com.dbs.movieservice.service.member.CustomerService;
+import com.dbs.movieservice.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +27,7 @@ import java.util.List;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final CustomerService customerService;
 
     @Operation(
             summary = "특정 영화의 리뷰 목록 조회",
@@ -99,15 +103,18 @@ public class ReviewController {
 
     @Operation(
             summary = "마이페이지 - 내가 작성한 리뷰 목록 조회",
-            description = "로그인한 사용자의 ID를 기준으로 본인이 작성한 리뷰 목록을 조회합니다."
+            description = "로그인한 사용자의 JWT 토큰을 기준으로 본인이 작성한 리뷰 목록을 조회합니다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "내 리뷰 목록 조회 성공")
+            @ApiResponse(responseCode = "200", description = "내 리뷰 목록 조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패")
     })
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/my")
-    public ResponseEntity<List<ReviewDto>> getMyReviews(
-            @Parameter(description = "고객 ID", example = "42")
-            @RequestParam Long customerId) {
+    public ResponseEntity<List<ReviewDto>> getMyReviews() {
+        String customerInputId = SecurityUtils.getCurrentCustomerInputId();
+        // customerInputId로 Customer 객체를 찾아서 customerId 추출
+        Long customerId = customerService.getCustomerByInputId(customerInputId).getCustomerId();
         return ResponseEntity.ok(reviewService.getReviewsByCustomer(customerId));
     }
 }

@@ -9,6 +9,7 @@ import com.dbs.movieservice.domain.ticketing.Ticket;
 import com.dbs.movieservice.repository.ticketing.TicketRepository;
 import com.dbs.movieservice.service.ticketing.PaymentService;
 import com.dbs.movieservice.service.ticketing.TicketService;
+import com.dbs.movieservice.service.member.CustomerService;
 import com.dbs.movieservice.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -33,6 +34,7 @@ import java.util.List;
 public class TicketingController {
     private final TicketService ticketService;
     private final PaymentService paymentService;
+    private final CustomerService customerService;
 
 //    String customerInputId = SecurityUtils.getCurrentCustomerInputId();
 
@@ -168,6 +170,86 @@ public class TicketingController {
        return ResponseEntity.ok("good");
     }
 
+    @GetMapping("/my-bookings")
+    @Operation(
+            summary = "나의 예매내역 조회",
+            description = "로그인한 사용자의 예매내역을 조회합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "예매내역 조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    public ResponseEntity<List<BookingResponse>> getMyBookings() {
+        try {
+            String customerInputId = SecurityUtils.getCurrentCustomerInputId();
+            Customer customer = customerService.getCustomerByInputId(customerInputId);
+            
+            List<Payment> payments = paymentService.getAllPaymentByCustomer(customer);
+            
+            List<BookingResponse> bookings = payments.stream()
+                    .flatMap(payment -> payment.getTickets().stream()
+                            .map(ticket -> BookingResponse.builder()
+                                    .bookingId(payment.getPaymentId())
+                                    .movieTitle(ticket.getSchedule().getMovie().getMovieName())
+                                    .showDate(ticket.getSchedule().getScheduleDate().toString())
+                                    .showTime(ticket.getSchedule().getScheduleStartTime().toLocalTime().toString())
+                                    .theater(ticket.getSchedule().getTheater().getTheaterName())
+                                    .seatNumber(ticket.getSeat().getRowNumber() + "-" + ticket.getSeat().getColumnNumber())
+                                    .totalPrice(payment.getPaymentAmount())
+                                    .paymentMethod(payment.getCard().getCardCompany())
+                                    .status("예매완료") // paymentCancel 필드가 없으므로 기본값
+                                    .bookingDate(payment.getPaymentDate().toString())
+                                    .bookingNumber("TKT" + payment.getPaymentId())
+                                    .build()))
+                    .toList();
+                    
+            return ResponseEntity.ok(bookings);
+        } catch (Exception e) {
+            log.error("예매내역 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/watched-movies")
+    @Operation(
+            summary = "관람 완료한 영화 목록 조회 (무비로그)",
+            description = "로그인한 사용자가 관람 완료한 영화 목록을 조회합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "관람 완료 영화 조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    public ResponseEntity<List<WatchedMovieResponse>> getWatchedMovies() {
+        try {
+            String customerInputId = SecurityUtils.getCurrentCustomerInputId();
+            Customer customer = customerService.getCustomerByInputId(customerInputId);
+            
+            List<Payment> payments = paymentService.getAllPaymentByCustomer(customer);
+            
+            // 상영일이 현재보다 이전인 것들만 필터링 (관람 완료)
+            List<WatchedMovieResponse> watchedMovies = payments.stream()
+                    .flatMap(payment -> payment.getTickets().stream())
+                    .filter(ticket -> ticket.getSchedule().getScheduleDate().isBefore(java.time.LocalDate.now())) // 상영일이 지난 것만
+                    .map(ticket -> WatchedMovieResponse.builder()
+                            .movieId(ticket.getSchedule().getMovie().getMovieId())
+                            .title(ticket.getSchedule().getMovie().getMovieName())
+                            .poster("/placeholder.svg") // TODO: 실제 포스터 URL 연결
+                            .watchDate(ticket.getSchedule().getScheduleDate().toString())
+                            .theater(ticket.getSchedule().getTheater().getTheaterName())
+                            .genre("액션") // TODO: 실제 장르 정보 연결
+                            .build())
+                    .distinct() // 중복 제거
+                    .toList();
+                    
+            return ResponseEntity.ok(watchedMovies);
+        } catch (Exception e) {
+            log.error("관람 완료 영화 조회 실패", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     /**
      * 티켓 생성용 DTO
      */
@@ -225,5 +307,42 @@ public class TicketingController {
     @AllArgsConstructor
     public static class DeleteTicketsRequest {
         private List<Long> ticketIds;
+    }
+
+    /**
+     * 예매내역 응답 DTO
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BookingResponse {
+        private Long bookingId;
+        private String movieTitle;
+        private String showDate;
+        private String showTime;
+        private String theater;
+        private String seatNumber;
+        private Integer totalPrice;
+        private String paymentMethod;
+        private String status;
+        private String bookingDate;
+        private String bookingNumber;
+    }
+
+    /**
+     * 관람 완료 영화 응답 DTO
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WatchedMovieResponse {
+        private Long movieId;
+        private String title;
+        private String poster;
+        private String watchDate;
+        private String theater;
+        private String genre;
     }
 }
