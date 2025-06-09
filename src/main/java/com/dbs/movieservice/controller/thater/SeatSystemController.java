@@ -51,6 +51,39 @@ public class SeatSystemController {
         return ResponseEntity.ok(scheduleService.parseSeatBySchedule(schedule, seatList));
     }
 
+    @PostMapping("/parse-seat-cols-rows")
+    @Operation(
+            summary = "seatId 목록을 기반으로 행/열 좌표 반환",
+            description = "seatId 목록을 전달하면 해당 좌석의 row/column 정보를 포함한 리스트를 반환합니다."
+    )
+    public ResponseEntity<List<ParseSeatRequest.ColRow>> parseSeatColsRows(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "seatId 리스트 요청",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = SeatIdListRequest.class))
+            )
+            @RequestBody SeatIdListRequest request
+    ) {
+        List<Seat> seats = seatService.praseIdstoColRow(
+                request.getSeatIds().stream()
+                        .map(id -> {
+                            Seat s = new Seat();
+                            s.setSeatId(id);
+                            return s;
+                        }).toList()
+        );
+
+        List<ParseSeatRequest.ColRow> colRowList = seats.stream()
+                .map(seat -> {
+                    ParseSeatRequest.ColRow cr = new ParseSeatRequest.ColRow();
+                    cr.setColumn(seat.getColumnNumber());
+                    cr.setRow(seat.getRowNumber());
+                    return cr;
+                }).toList();
+
+        return ResponseEntity.ok(colRowList);
+    }
+
 
 
     /**
@@ -69,4 +102,14 @@ public class SeatSystemController {
             private Integer row;
         }
     }
+
+    @Getter
+    @Setter
+    @Schema(description = "seatId 목록 요청 DTO")
+    public static class SeatIdListRequest {
+        @Schema(description = "seatId 리스트", example = "[1, 2, 3]")
+        private List<Long> seatIds;
+    }
+
+
 }
