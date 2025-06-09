@@ -1,27 +1,33 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>토스 결제 테스트</title>
+    <title>TossPayments Test</title>
+    <script src="https://js.tosspayments.com/v1"></script>
 </head>
 <body>
-<h2>💳 결제 테스트</h2>
-<button id="pay">결제하기</button>
+<h2>테스트 결제</h2>
+<button id="payment-button">결제하기</button>
 
-<!-- Toss Payments 스크립트 -->
-<script src="https://js.tosspayments.com/v1"></script>
 <script>
-    const clientKey = "test_ck_LlDJaYngroGedo5KEp9KrezGdRpX";
+    const clientKey = 'test_ck_LlDJaYngroGedo5KEp9KrezGdRpX'; // 발급받은 클라이언트 키 입력
+
     const tossPayments = TossPayments(clientKey);
 
-    document.getElementById("pay").addEventListener("click", () => {
+    document.getElementById('payment-button').addEventListener('click', function () {
         tossPayments.requestPayment('카드', {
-            amount: 1000,
-            orderId: "order_" + new Date().getTime(),
-            orderName: "토이 프로젝트 결제",
-            customerName: "홍길동",
-            successUrl: "http://localhost:8081/success",
-            failUrl: "http://localhost:8081/fail"
+            amount: 18000,
+            orderId: 'paymenttttt2', // 백엔드에서 만든 orderId 사용
+            orderName: '영화 티켓',
+            customerName: '홍길동',
+            successUrl: 'http://localhost:8081/payment/success',
+            failUrl: 'http://localhost:8081/fail'
+        }).catch(function (error) {
+            if (error.code === 'USER_CANCEL') {
+                alert('결제가 취소되었습니다.');
+            } else {
+                alert('에러 발생: ' + error.message);
+            }
         });
     });
 </script>

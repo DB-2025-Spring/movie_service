@@ -8,6 +8,7 @@ import com.dbs.movieservice.domain.ticketing.Ticket;
 import com.dbs.movieservice.repository.ticketing.PaymentRepository;
 import com.dbs.movieservice.service.member.CardService;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +16,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
+@Slf4j
 @Service
 public class PaymentService {
     private final PaymentRepository paymentRepository;
@@ -29,7 +30,7 @@ public class PaymentService {
     }
 
     @Transactional
-    public Payment createPayment(Customer customer, List<Ticket> tickets, Card card, int usePoint, int disCountAmount) {
+    public Payment createPayment(Customer customer, List<Ticket> tickets, int usePoint, int disCountAmount) {
         //1. ticekts로부터 총 금액 합산.
         int amountValue = tickets.stream().mapToInt( ticket->
                 "A".equals(ticket.getAudienceType()) ? 10000:8000).sum();
@@ -38,23 +39,35 @@ public class PaymentService {
             if(paymentAmount < 0) {
                 throw new RuntimeException("Payment amount is negative");
             }
-        //포인트 감소 서비스 호출
-
-//        try {
-//            cardService.updateBalance(card.getCardId(), paymentAmount);
-//        } catch (BusinessException e) {
-//            Payment payment =  savePayment(customer,card,usePoint,disCountAmount,paymentAmount,"Failed");
-//            paymentRepository.save(payment);
-//            return payment;
-//        }
-        Payment payment =  savePayment(customer,card,usePoint,disCountAmount,paymentAmount,"Approve");
+        Payment payment = savePayment(customer, usePoint, disCountAmount, paymentAmount, "Pending");
         paymentRepository.flush();
-        ticketService.confirmPaymentForTicket(tickets, payment);
-        //총 결제 금액에 대해 customer의 포인트 증가 서비스 호출
-        
-        int customerTicketCount = countCustomerTicket(customer);
-        //해당값을 등급업 관련 서비스에 전달
+        ticketService.holdPaymentForTicket(tickets, payment);
+        return payment;
+    }
+    
+    //todo 포인트 증감로직 + 등급업(countCustomerTicket(payment.getCustomer())이거 쓰면됨)
+    @Transactional
+    public Payment confirmPayment(Long paymentId, String paymentKey, int approveNumber, String paymentMethod) {
+        // 1. Payment 조회
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new IllegalArgumentException("결제 내역이 존재하지 않습니다."));
 
+        // 2. 상태 확인 및 중복 승인 방지
+        if (!"Pending".equals(payment.getPaymentStatus())) {
+            throw new IllegalStateException("이미 승인된 결제이거나 상태가 올바르지 않습니다.");
+        }
+
+        payment.setPaymentStatus("Approve");
+        payment.setPaymentKey(paymentKey);
+        payment.setApprovalNumber(approveNumber);
+        payment.setPaymentDate(LocalDate.now());
+        payment.setPaymentMethod(paymentMethod);
+        paymentRepository.save(payment);
+        paymentRepository.flush();
+        // 4. 연관된 티켓 승인 처리
+        List<Ticket> tickets = payment.getTickets(); // @OneToMany(mappedBy = "payment")
+
+        ticketService.confirmPaymentForTicket(tickets, payment);
         return payment;
     }
 
@@ -63,16 +76,13 @@ public class PaymentService {
         Payment targetPayment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new IllegalArgumentException("Payment not found"));
         targetPayment.setPaymentStatus("cancelled");
-//        int usedPoint = targetPayment.getUsedPoints();
-//        int usedMoney = targetPayment.getPaymentAmount();
-//        Customer customer = payment.getCustomer();
-//        Card card = payment.getCard();
-        //usedPoint, usedMoney, customer, card값을 전달하고, 값을 갱신하는 코드 호출
+        paymentRepository.save(targetPayment);
+        paymentRepository.flush();
         ticketService.deleteTicket(targetPayment);
         return targetPayment;
     }
 
-    public Payment savePayment(Customer customer, Card card, int usePoint, int disCountAmount, int paymentAmount,String paymentStatus) {
+    public Payment savePayment(Customer customer, int usePoint, int disCountAmount, int paymentAmount,String paymentStatus) {
         Payment payment = new Payment();
         payment.setCustomer(customer);
         payment.setPaymentAmount(paymentAmount);
@@ -119,37 +129,8 @@ public class PaymentService {
         return tickets;
     }
 
-    //todo 토스페이먼트 사용(2단계로 나눠 구현)
-    /**
-     * 토스 페이먼트를 쓰기 위해 구현하는 메소드
-     */
-    @Transactional
-    public Payment createPendingPayment(Customer customer, List<Ticket> tickets, Card card, int usePoint, int disCountAmount) {
-        int amountValue = tickets.stream().mapToInt(ticket ->
-                "A".equals(ticket.getAudienceType()) ? 10000 : 8000).sum();
-        int paymentAmount = amountValue - disCountAmount - usePoint;
-        if (paymentAmount < 0) {
-            throw new RuntimeException("Payment amount is negative");
-        }
-        Payment pendingPayment = savePayment(customer, card, usePoint, disCountAmount, paymentAmount, "Pending");
-        ticketService.confirmPaymentForTicket(tickets, pendingPayment);
-        paymentRepository.flush();
-        return pendingPayment;
-    }
-
-    @Transactional
-    public Payment approvePayment(String paymentKey, Long orderId) {
-        Payment payment = paymentRepository.findById(orderId)
-                .orElseThrow(() -> new EntityNotFoundException("결제 정보가 없습니다."));
-
-        payment.setPaymentKey(paymentKey); // 저장 필요
-        payment.setPaymentStatus("Approve");
-        paymentRepository.flush();
-
-
-        int customerTicketCount = countCustomerTicket(payment.getCustomer());
-        // 등급 서비스 호출 등
-        //총 결제 금액에 대해 customer의 포인트 증가 서비스 호출
-        return payment;
+    public Payment getPayment(Long paymentId) {
+        return paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found"));
     }
 }
