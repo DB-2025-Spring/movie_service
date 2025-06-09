@@ -62,5 +62,16 @@ public class CustomerService {
         // 이미 MEMBER나 ADMIN인 경우 변경하지 않음
         return customer;
     }
+    
+    /**
+     * 고객 입력 아이디로 고객 조회
+     * @param customerInputId
+     * @return Customer
+     */
+    @Transactional(readOnly = true)
+    public Customer getCustomerByInputId(String customerInputId) {
+        return customerRepository.findByCustomerInputId(customerInputId)
+                .orElseThrow(() -> new RuntimeException("Customer not found with ID: " + customerInputId));
+    }
 
 } 

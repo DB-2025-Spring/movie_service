@@ -11,6 +11,10 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findByCustomerInputId(String customerInputId);
     Boolean existsByCustomerInputId(String customerInputId);
     
+    // level을 fetch join으로 함께 조회하는 메서드
+    @Query("SELECT c FROM Customer c JOIN FETCH c.level WHERE c.customerInputId = :customerInputId")
+    Optional<Customer> findByCustomerInputIdWithLevel(@Param("customerInputId") String customerInputId);
+    
     // 비회원 관련 메서드 추가
     Optional<Customer> findByPhone(String phone);
     Boolean existsByPhone(String phone);

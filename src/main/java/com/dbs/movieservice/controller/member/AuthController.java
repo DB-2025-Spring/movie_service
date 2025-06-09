@@ -44,6 +44,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -124,7 +126,7 @@ public class AuthController {
         log.info("Admin login successful for user: {} from IP: {}", 
                 loginRequest.getCustomerInputId(), getClientIP(request));
         
-        return ResponseEntity.ok(new AuthResponse(jwt, adminUser.getUsername(), "ADMIN"));
+        return ResponseEntity.ok(new AuthResponse(jwt, adminUser.getUsername(), "관리자", "ADMIN"));
     }
     
     /**
@@ -176,7 +178,10 @@ public class AuthController {
             // 생일 쿠폰 발급 실패는 로그인 실패로 처리하지 않음
         }
 
-        return ResponseEntity.ok(new AuthResponse(jwt, userDetails.getUsername(), authority));
+        // 고객 정보 조회해서 이름 가져오기
+        Customer customer = customerService.getCustomerByInputId(userDetails.getUsername());
+        
+        return ResponseEntity.ok(new AuthResponse(jwt, userDetails.getUsername(), customer.getCustomerName(), authority));
     }
     
     /**
@@ -290,12 +295,17 @@ public class AuthController {
         
         boolean isDuplicate = customerService.checkDuplicateCustomerId(customerInputId);
         
+        // JSON 객체로 응답하기 위해 Map 사용
+        Map<String, Object> response = new HashMap<>();
+        
         if (isDuplicate) {
-            return ResponseEntity.ok()
-                    .body("{\"available\": false, \"message\": \"Username is already taken\"}");
+            response.put("available", false);
+            response.put("message", "Username is already taken");
         } else {
-            return ResponseEntity.ok()
-                    .body("{\"available\": true, \"message\": \"Username is available\"}");
+            response.put("available", true);
+            response.put("message", "Username is available");
         }
+        
+        return ResponseEntity.ok(response);
     }
 } 
