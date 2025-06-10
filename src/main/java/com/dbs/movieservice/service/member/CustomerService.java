@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -72,6 +73,15 @@ public class CustomerService {
     public Customer getCustomerByInputId(String customerInputId) {
         return customerRepository.findByCustomerInputId(customerInputId)
                 .orElseThrow(() -> new RuntimeException("Customer not found with ID: " + customerInputId));
+    }
+
+    /**
+     * 모든 고객 조회 (관리자용)
+     * @return List<Customer>
+     */
+    @Transactional(readOnly = true)
+    public List<Customer> findAllCustomers() {
+        return customerRepository.findAll();
     }
 
 } 

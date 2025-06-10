@@ -2,6 +2,7 @@ package com.dbs.movieservice.controller.member;
 
 import com.dbs.movieservice.controller.dto.*;
 import com.dbs.movieservice.domain.member.ClientLevel;
+import com.dbs.movieservice.domain.member.Customer;
 import com.dbs.movieservice.domain.movie.Actor;
 import com.dbs.movieservice.domain.movie.Genre;
 import com.dbs.movieservice.domain.movie.Movie;
@@ -11,6 +12,7 @@ import com.dbs.movieservice.domain.theater.Theater;
 import com.dbs.movieservice.domain.ticketing.Coupon;
 import com.dbs.movieservice.dto.GenreDto;
 import com.dbs.movieservice.service.member.ClientLevelService;
+import com.dbs.movieservice.service.member.CustomerService;
 import com.dbs.movieservice.service.movie.ActorService;
 import com.dbs.movieservice.service.movie.GenreService;
 import com.dbs.movieservice.service.movie.MovieService;
@@ -56,6 +58,7 @@ public class AdminController {
     private final CouponService couponService;
     private final ClientLevelService clientLevelService;
     private final IssueCouponService issueCouponService;
+    private final CustomerService customerService;
 
     // 영화 관리
     
@@ -649,5 +652,25 @@ public class AdminController {
         
         log.info("Admin retrieved {} coupons for customer: {}", coupons.size(), customerInputId);
         return ResponseEntity.ok(coupons);
+    }
+
+    // 고객 관리
+    
+    @GetMapping("/users")
+    @Operation(summary = "모든 고객 조회", description = "시스템에 등록된 모든 고객 목록을 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "조회 성공",
+                content = @Content(schema = @Schema(implementation = CustomerResponse.class))),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<List<CustomerResponse>> getAllUsers() {
+        List<Customer> customers = customerService.findAllCustomers();
+        List<CustomerResponse> customerResponses = customers.stream()
+                .map(CustomerResponse::from)
+                .toList();
+        
+        log.info("Admin retrieved {} customers", customerResponses.size());
+        return ResponseEntity.ok(customerResponses);
     }
 }
