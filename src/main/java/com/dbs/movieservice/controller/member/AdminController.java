@@ -665,12 +665,44 @@ public class AdminController {
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
     public ResponseEntity<List<CustomerResponse>> getAllUsers() {
-        List<Customer> customers = customerService.findAllCustomers();
-        List<CustomerResponse> customerResponses = customers.stream()
-                .map(CustomerResponse::from)
-                .toList();
-        
-        log.info("Admin retrieved {} customers", customerResponses.size());
-        return ResponseEntity.ok(customerResponses);
+        List<CustomerResponse> users = customerService.findAllCustomers();
+        return ResponseEntity.ok(users);
+    }
+
+    @PutMapping("/users/{customerInputId}")
+    @Operation(summary = "사용자 정보 수정", description = "특정 사용자의 정보를 수정합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "수정 성공",
+                content = @Content(schema = @Schema(implementation = CustomerResponse.class))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<CustomerResponse> updateUser(
+            @Parameter(description = "사용자 ID", example = "testuser123", required = true) 
+            @PathVariable String customerInputId,
+            @Valid @RequestBody CustomerUpdateRequest request) {
+        CustomerResponse updatedUser = customerService.updateCustomer(customerInputId, request);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @PutMapping("/users/{customerInputId}/level")
+    @Operation(summary = "사용자 등급 직접 변경", description = "관리자가 특정 사용자의 등급을 직접 변경합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "등급 변경 성공",
+                content = @Content(schema = @Schema(implementation = CustomerResponse.class))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+        @ApiResponse(responseCode = "404", description = "사용자 또는 등급을 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<CustomerResponse> updateUserLevel(
+            @Parameter(description = "사용자 ID", example = "testuser123", required = true) 
+            @PathVariable String customerInputId,
+            @Parameter(description = "새로운 등급 ID", example = "3", required = true) 
+            @RequestParam Integer levelId) {
+        CustomerResponse updatedUser = customerService.updateCustomerLevel(customerInputId, levelId);
+        return ResponseEntity.ok(updatedUser);
     }
 }
