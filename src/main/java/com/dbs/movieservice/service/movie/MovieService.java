@@ -38,25 +38,25 @@ public class MovieService {
         return movieRepository.findAutoCompleteTitles(keyword);
     }
 
-    //최신 영화 목록
+    //제목으로 조회
     public List<MovieDto> searchMoviesByKeyword(String keyword) {
         return movieRepository.searchMoviesByKeyword(keyword)
                 .stream().map(MovieDto::new).toList();
     }
 
-    //현재 상영작
+    //최신순으로 정렬?
     public List<MovieDto> getRecentMovies() {
         return movieRepository.findAllByOrderByReleaseDateDesc()
                 .stream().map(MovieDto::new).toList();
     }
 
-    //상영 예정작
+    //현재 상영작
     public List<MovieDto> getNowShowingMovies() {
         return movieRepository.findNowShowingMovies()
                 .stream().map(MovieDto::new).toList();
     }
 
-    //영화 상세
+    //상영예고작
     public List<MovieDto> getUpcomingMovies() {
         return movieRepository.findUpcomingMovies()
                 .stream().map(MovieDto::new).toList();
@@ -148,5 +148,10 @@ public class MovieService {
                 return true;
         }
         return false;
+    }
+
+
+    public List<Movie> isNowShowing(){
+        return movieRepository.findNowShowingMovies();
     }
 } 

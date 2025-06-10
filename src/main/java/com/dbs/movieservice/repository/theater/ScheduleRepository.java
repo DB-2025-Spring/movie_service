@@ -34,6 +34,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
-    @Query("SELECT DISTINCT s FROM Schedule s WHERE s.scheduleDate = :scheduleDate")
+    @Query("SELECT DISTINCT s FROM Schedule s Left Join fetch s.movie m WHERE s.scheduleDate = :scheduleDate")
     List<Schedule> findSchedulesByDate(@Param("scheduleDate") LocalDate scheduleDate);
 }

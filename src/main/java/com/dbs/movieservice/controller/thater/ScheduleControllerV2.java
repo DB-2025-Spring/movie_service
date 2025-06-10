@@ -48,10 +48,4 @@ public class ScheduleControllerV2 {
         }
         return ResponseEntity.ok(availableDates);
     }
-
-    @GetMapping("/temp")
-    public ResponseEntity<?> testMethod(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date){
-        System.out.println(scheduleService.getScheduleByDate(date));
-        return ResponseEntity.ok("good");
-    }
 }

@@ -130,14 +130,13 @@ public class ScheduleService {
     }
 
     /**
-     *
+     * 날짜를 하나 전달 받으면 movie를 left join한 schedule List를 반환받늗다.
      * @param date
      * @return
      */
     public List<Schedule> getScheduleByDate(LocalDate date) {
         return scheduleRepository.findSchedulesByDate(date);
     }
-
     // ========== Admin용 추가 메서드들 ==========
 
     /**

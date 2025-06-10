@@ -25,8 +25,11 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     // 개봉일 기준 정렬
     List<Movie> findAllByOrderByReleaseDateDesc();
 
-    // 현재 상영작 (release_date <= 오늘, end_date >= 오늘)
-    @Query("SELECT m FROM Movie m WHERE m.releaseDate <= CURRENT_DATE AND m.endDate >= CURRENT_DATE")
+    @Query("""
+    SELECT m FROM Movie m 
+    WHERE m.releaseDate <= CURRENT_DATE 
+      AND (m.endDate IS NULL OR m.endDate >= CURRENT_DATE)
+""")
     List<Movie> findNowShowingMovies();
 
     // 상영 예정작 (release_date > 오늘)
