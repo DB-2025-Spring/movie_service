@@ -20,6 +20,20 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
                                                 @Param("startOfToday") LocalDateTime startOfToday,
                                                 @Param("endOfTargetDay") LocalDateTime endOfTargetDay);
 
-    @Query("SELECT s FROM Schedule s WHERE s.scheduleDate = :scheduleDate")
+
+    /**
+     * ====V2용 query====
+     */
+    @Query(value = """
+    SELECT DISTINCT TRUNC(s.schedule_start_time)
+    FROM schedule s
+    WHERE s.schedule_start_time BETWEEN :start AND :end
+    ORDER BY TRUNC(s.schedule_start_time)
+    """, nativeQuery = true)
+    List<Object> findScheduleDateBetweenTwoDateNative(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+    @Query("SELECT DISTINCT s FROM Schedule s WHERE s.scheduleDate = :scheduleDate")
     List<Schedule> findSchedulesByDate(@Param("scheduleDate") LocalDate scheduleDate);
 }
