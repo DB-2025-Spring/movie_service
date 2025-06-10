@@ -1,7 +1,11 @@
 package com.dbs.movieservice.controller.thater;
 
+import com.dbs.movieservice.domain.movie.Movie;
 import com.dbs.movieservice.domain.theater.Schedule;
 import com.dbs.movieservice.domain.theater.SeatAvailable;
+import com.dbs.movieservice.dto.GenreDto;
+import com.dbs.movieservice.dto.MovieDto;
+import com.dbs.movieservice.service.movie.MovieService;
 import com.dbs.movieservice.service.theater.ScheduleService;
 import com.dbs.movieservice.service.theater.SeatAvailableService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +35,7 @@ import java.util.Map;
 public class ScheduleController {
     private final ScheduleService scheduleService;
     private final SeatAvailableService seatAvailableService;
+    private final MovieService movieService;
 
 
     @GetMapping("/available-schedule")
@@ -129,8 +134,21 @@ public class ScheduleController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/now-showing")
+    public ResponseEntity<List<MovieWithGenresDto>> getNowShowingMovies() {
+        List<Movie> movieList = movieService.isNowShowing();
 
+        List<MovieWithGenresDto> response = movieList.stream()
+                .map(movie -> {
+                    List<GenreDto> genres = movie.getMovieGenres().stream()
+                            .map(movieGenre -> new GenreDto(movieGenre.getGenre()))
+                            .toList();
+                    return new MovieWithGenresDto(new MovieDto(movie), genres);
+                })
+                .toList();
 
+        return ResponseEntity.ok(response);
+    }
 
 
 
@@ -211,5 +229,17 @@ public class ScheduleController {
             this.scheduleSequence = schedule.getScheduleSequence();
             this.availableSeatCount = availableSeatCount;
         }
+    }
+
+    @Getter
+    @Schema(description = "영화 및 장르 리스트를 함께 포함하는 DTO")
+    @AllArgsConstructor
+    public static class MovieWithGenresDto {
+
+        @Schema(description = "영화 기본 정보")
+        private final MovieDto movie;
+
+        @ArraySchema(schema = @Schema(implementation = GenreDto.class))
+        private final List<GenreDto> genres;
     }
 }
