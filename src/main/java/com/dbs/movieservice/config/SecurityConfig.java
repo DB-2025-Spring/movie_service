@@ -62,8 +62,7 @@ public class SecurityConfig {
                 // Swagger UI 관련 경로 허용
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**").permitAll()
                 // Public endpoints
-                    .requestMatchers("/auth/**", "/test", "/payment/success").permitAll()
-                
+                    .requestMatchers("/auth/**", "/test", "/payment/success","/v2/schedules/**","/schedule/**").permitAll()
                 // Admin-only endpoints
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                     //Seat Parser
@@ -71,6 +70,7 @@ public class SecurityConfig {
                     .requestMatchers("/seat-system/parse-seat-cols-rows").permitAll()
                 // Authenticated user endpoints
                 .anyRequest().authenticated()
+
             )
             // 익명 사용자에게 GUEST 역할 부여
             .anonymous(anonymous -> anonymous

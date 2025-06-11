@@ -7,13 +7,12 @@ import com.dbs.movieservice.domain.theater.Seat;
 import com.dbs.movieservice.domain.theater.Theater;
 import com.dbs.movieservice.repository.movie.MovieRepository;
 import com.dbs.movieservice.repository.theater.ScheduleRepository;
-import com.dbs.movieservice.repository.theater.SeatAvailableRepository;
-import com.dbs.movieservice.repository.theater.SeatRepository;
 import com.dbs.movieservice.repository.theater.TheaterRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -91,6 +90,8 @@ public class ScheduleService {
         return scheduleRepository.findSchedulesForNext7Days(movieId, startOfToday, endOfTargetDay);
     }
 
+
+
     /**
      *
      * @param selectedDate
@@ -112,6 +113,31 @@ public class ScheduleService {
                 ));
     }
 
+    //=====v2용 메서드============
+    /**
+     * scheduleController V2용 함수. 오늘을 기점으로, 15일간 영화가 있는날을 리스트로 반환한다.
+     * @param
+     * @return
+     */
+    public List<LocalDate> getScheduledDatesForNext15Days() {
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        LocalDateTime end = start.plusDays(15);
+
+        List<Object> result = scheduleRepository.findScheduleDateBetweenTwoDateNative(start, end);
+        return result.stream()
+                .map(val -> ((Timestamp) val).toLocalDateTime().toLocalDate())
+                .distinct()
+                .toList();
+    }
+
+    /**
+     * 날짜를 하나 전달 받으면 movie를 left join한 schedule List를 반환받늗다.
+     * @param date
+     * @return
+     */
+    public List<Schedule> getScheduleByDate(LocalDate date) {
+        return scheduleRepository.findSchedulesByDate(date);
+    }
     // ========== Admin용 추가 메서드들 ==========
 
     /**

@@ -1,5 +1,6 @@
 package com.dbs.movieservice.domain.movie;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,5 +23,6 @@ public class Genre {
     private String genreName;
 
     @OneToMany(mappedBy = "genre", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<MovieGenre> movieGenres = new ArrayList<>();
 }
