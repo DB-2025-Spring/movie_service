@@ -1,5 +1,6 @@
 package com.dbs.movieservice.domain.movie;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,11 +19,13 @@ public class MovieGenre {
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("movieId")
     @JoinColumn(name = "movie_id")
+    @JsonBackReference
     private Movie movie;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("genreId")
     @JoinColumn(name = "genre_id")
+    @JsonBackReference
     private Genre genre;
 
     public MovieGenre() {}
