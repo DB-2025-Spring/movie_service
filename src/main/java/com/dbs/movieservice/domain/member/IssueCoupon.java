@@ -5,8 +5,10 @@ import com.dbs.movieservice.domain.ticketing.Coupon;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
@@ -14,47 +16,40 @@ import java.util.Objects;
 @Setter
 @Table(name="issue_cupon")
 public class IssueCoupon {
-    @EmbeddedId
-    private IssueCouponId id;
+    @Id
+    @SequenceGenerator(name = "issue_coupon_seq", sequenceName = "issue_coupon_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "issue_coupon_seq")
+    @Column(name = "issue_id")
+    private Long issueId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("customerId")
-    @JoinColumn(name = "customer_id")
+    @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("couponId")
-    @JoinColumn(name = "coupon_id")
+    @JoinColumn(name = "coupon_id", nullable = false)
     private Coupon coupon;
 
+    @CreationTimestamp
+    @Column(name = "issued_at", nullable = false)
+    private LocalDateTime issuedAt;
 
-    @Getter
-    @Setter
-    @Embeddable
-    public static class IssueCouponId implements Serializable {
+    @Column(name = "is_used", nullable = false)
+    private Boolean isUsed = false;
 
-        private Long customerId;
-        private Long couponId;
+    @Column(name = "used_at")
+    private LocalDateTime usedAt;
 
-        public IssueCouponId() {}
-
-        public IssueCouponId(Long customerId, Long couponId) {
-            this.customerId = customerId;
-            this.couponId = couponId;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof IssueCouponId)) return false;
-            IssueCouponId that = (IssueCouponId) o;
-            return Objects.equals(customerId, that.customerId) &&
-                    Objects.equals(couponId, that.couponId);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(customerId, couponId);
-        }
+    
+    // 쿠폰 사용 처리 메서드
+    public void useCoupon() {
+        this.isUsed = true;
+        this.usedAt = LocalDateTime.now();
+    }
+    
+    // 쿠폰 사용 취소 메서드
+    public void cancelUsage() {
+        this.isUsed = false;
+        this.usedAt = null;
     }
 }

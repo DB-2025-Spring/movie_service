@@ -75,11 +75,8 @@ public class BirthdayCouponService {
                 return false;
             }
 
-            // 생일쿠폰 발급
+            // 생일쿠폰 발급 (새로운 구조 사용)
             IssueCoupon issueCoupon = new IssueCoupon();
-            IssueCoupon.IssueCouponId id = new IssueCoupon.IssueCouponId(
-                    customer.getCustomerId(), birthdayCoupon.getCouponId());
-            issueCoupon.setId(id);
             issueCoupon.setCustomer(customer);
             issueCoupon.setCoupon(birthdayCoupon);
 
@@ -96,12 +93,18 @@ public class BirthdayCouponService {
 
     /**
      * 올해 생일쿠폰을 이미 받았는지 확인
-     * IssueCoupon에 issuedAt 필드가 없으므로, 단순히 발급 여부만 확인
-     * 실제 구현에서는 년도별 체크 로직이 필요할 수 있습니다.
+     * issuedAt 필드를 이용하여 년도별 체크
      */
     private boolean hasReceivedBirthdayCouponThisYear(Long customerId, Long couponId) {
-        // 현재는 단순히 발급 여부만 확인
-        // 추후 issuedAt 필드가 추가되면 년도별 체크 로직으로 변경 가능
-        return issueCouponRepository.existsByCustomerIdAndCouponId(customerId, couponId);
+        LocalDate thisYear = LocalDate.now();
+        LocalDate yearStart = thisYear.withDayOfYear(1);
+        LocalDate yearEnd = thisYear.withDayOfYear(thisYear.lengthOfYear());
+        
+        return issueCouponRepository.findByCustomerIdAndCouponId(customerId, couponId)
+                .stream()
+                .anyMatch(issueCoupon -> {
+                    LocalDate issuedDate = issueCoupon.getIssuedAt().toLocalDate();
+                    return !issuedDate.isBefore(yearStart) && !issuedDate.isAfter(yearEnd);
+                });
     }
 } 

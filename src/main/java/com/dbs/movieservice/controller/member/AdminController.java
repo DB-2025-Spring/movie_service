@@ -399,12 +399,12 @@ public class AdminController {
     @Operation(summary = "모든 상영일정 조회", description = "시스템에 등록된 모든 상영일정 목록을 조회합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "조회 성공",
-                content = @Content(schema = @Schema(implementation = Schedule.class))),
+                content = @Content(schema = @Schema(implementation = ScheduleResponse.class))),
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<List<Schedule>> getAllSchedules() {
-        List<Schedule> schedules = scheduleService.findAllSchedules();
+    public ResponseEntity<List<ScheduleResponse>> getAllSchedules() {
+        List<ScheduleResponse> schedules = scheduleService.findAllSchedules();
         return ResponseEntity.ok(schedules);
     }
 
@@ -652,6 +652,42 @@ public class AdminController {
         
         log.info("Admin retrieved {} coupons for customer: {}", coupons.size(), customerInputId);
         return ResponseEntity.ok(coupons);
+    }
+
+    @PutMapping("/use-coupon/{issueId}")
+    @Operation(summary = "쿠폰 사용 처리", description = "관리자가 특정 발급된 쿠폰을 사용 처리합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "쿠폰 사용 처리 성공"),
+        @ApiResponse(responseCode = "400", description = "이미 사용된 쿠폰"),
+        @ApiResponse(responseCode = "404", description = "발급된 쿠폰을 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<?> useCoupon(
+            @Parameter(description = "발급 ID", example = "1", required = true) 
+            @PathVariable Long issueId) {
+        issueCouponService.useCoupon(issueId);
+        
+        log.info("Admin marked coupon issue {} as used", issueId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/cancel-coupon-usage/{issueId}")
+    @Operation(summary = "쿠폰 사용 취소", description = "관리자가 사용된 쿠폰의 사용 상태를 취소합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "쿠폰 사용 취소 성공"),
+        @ApiResponse(responseCode = "400", description = "사용되지 않은 쿠폰"),
+        @ApiResponse(responseCode = "404", description = "발급된 쿠폰을 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<?> cancelCouponUsage(
+            @Parameter(description = "발급 ID", example = "1", required = true) 
+            @PathVariable Long issueId) {
+        issueCouponService.cancelCouponUsage(issueId);
+        
+        log.info("Admin canceled coupon usage for issue {}", issueId);
+        return ResponseEntity.ok().build();
     }
 
     // 고객 관리
