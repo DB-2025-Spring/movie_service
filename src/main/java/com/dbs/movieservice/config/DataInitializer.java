@@ -69,17 +69,16 @@ public class DataInitializer implements CommandLineRunner {
             log.info("기본 쿠폰 데이터를 초기화합니다.");
             
             LocalDate currentDate = LocalDate.now();
-            LocalDate endOfYear = LocalDate.of(currentDate.getYear(), 12, 31);
-            
+
             List<Coupon> defaultCoupons = Arrays.asList(
                 createCoupon("생일쿠폰", "생일 축하 특별 할인쿠폰", 
                            LocalDate.of(2024, 1, 1), LocalDate.of(2030, 12, 31)),
                 createCoupon("신규가입쿠폰", "신규 회원가입 환영 쿠폰", 
-                           currentDate, endOfYear),
+                           currentDate, currentDate.plusMonths(3)),
                 createCoupon("등급업쿠폰", "등급 업그레이드 축하 쿠폰", 
-                           currentDate, endOfYear),
+                           currentDate, currentDate.plusMonths(3)),
                 createCoupon("특별할인쿠폰", "특별 이벤트 할인 쿠폰", 
-                           currentDate, endOfYear)
+                           currentDate, currentDate.plusMonths(3))
             );
             
             couponRepository.saveAll(defaultCoupons);

@@ -100,9 +100,9 @@ public class LevelUpService {
     }
 
     /**
-     * 등급업 축하 쿠폰 발급
+     * 등급업 축하 쿠폰 발급 (관리자 등급 변경 시에도 사용)
      */
-    private void issueLevelUpCoupon(Customer customer) {
+    public void issueLevelUpCoupon(Customer customer) {
         try {
             // 등급업쿠폰 조회 (쿠폰명으로 검색)
             Optional<Coupon> levelUpCouponOpt = couponRepository.findAll().stream()

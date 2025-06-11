@@ -26,6 +26,7 @@ public class CustomerService {
     private final CustomerRepository customerRepository;
     private final PasswordEncoder passwordEncoder;
     private final ClientLevelRepository clientLevelRepository;
+    private final LevelUpService levelUpService;
 
     @Transactional
     public Customer registerCustomer(SignupRequest signupRequest) {
@@ -120,8 +121,19 @@ public class CustomerService {
         ClientLevel newLevel = clientLevelRepository.findById(levelId)
                 .orElseThrow(() -> new RuntimeException("Level not found: " + levelId));
         
+        // 현재 등급 저장 (등급업 확인용)
+        ClientLevel currentLevel = customer.getLevel();
+        Integer currentLevelId = currentLevel != null ? currentLevel.getLevelId() : 1;
+        
         customer.setLevel(newLevel);
         Customer savedCustomer = customerRepository.save(customer);
+        
+        // 등급이 상승했을 때만 등급업 쿠폰 발급
+        if (levelId > currentLevelId) {
+            log.info("Level up detected: {} from level {} to level {}", 
+                    customerInputId, currentLevelId, levelId);
+            levelUpService.issueLevelUpCoupon(savedCustomer);
+        }
         
         log.info("Customer level updated successfully: {} to {}", customerInputId, newLevel.getLevelName());
         
