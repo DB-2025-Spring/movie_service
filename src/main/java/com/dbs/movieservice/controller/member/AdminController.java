@@ -1,10 +1,8 @@
 package com.dbs.movieservice.controller.member;
 
 import com.dbs.movieservice.controller.dto.*;
-import com.dbs.movieservice.controller.dto.TheaterCreateRequest;
 import com.dbs.movieservice.controller.dto.SeatBulkCreateRequest;
 import com.dbs.movieservice.domain.member.ClientLevel;
-import com.dbs.movieservice.domain.member.Customer;
 import com.dbs.movieservice.domain.movie.Actor;
 import com.dbs.movieservice.domain.movie.Genre;
 import com.dbs.movieservice.domain.movie.Movie;
