@@ -1,5 +1,6 @@
 package com.dbs.movieservice.service.theater;
 
+import com.dbs.movieservice.controller.dto.SeatBulkCreateRequest;
 import com.dbs.movieservice.domain.theater.Seat;
 import com.dbs.movieservice.domain.theater.Theater;
 import com.dbs.movieservice.repository.theater.SeatRepository;
@@ -122,5 +123,73 @@ public class SeatService {
             }
         }
         return seats;
+    }
+    
+    // ========== 좌석 일괄 관리 메서드들 ==========
+    
+    /**
+     * 좌석 일괄 생성 (특정 상영관)
+     */
+    @Transactional
+    public List<Seat> createSeatsInBulk(Long theaterId, List<SeatBulkCreateRequest.SeatInfo> seatInfos) {
+        Theater theater = theaterRepository.findById(theaterId)
+                .orElseThrow(() -> new RuntimeException("상영관을 찾을 수 없습니다: " + theaterId));
+        
+        List<Seat> seats = new ArrayList<>();
+        for (SeatBulkCreateRequest.SeatInfo seatInfo : seatInfos) {
+            // 중복 좌석 체크
+            Seat existingSeat = seatRepository.findByTheaterAndRowNumberAndColumnNumber(
+                theater, seatInfo.getRowNumber(), seatInfo.getColumnNumber()
+            );
+            if (existingSeat != null) {
+                throw new RuntimeException(
+                    String.format("좌석이 이미 존재합니다: %d행 %d열", 
+                        seatInfo.getRowNumber(), seatInfo.getColumnNumber())
+                );
+            }
+            
+            Seat seat = new Seat();
+            seat.setTheater(theater);
+            seat.setRowNumber(seatInfo.getRowNumber());
+            seat.setColumnNumber(seatInfo.getColumnNumber());
+            seats.add(seat);
+        }
+        
+        List<Seat> savedSeats = seatRepository.saveAll(seats);
+        
+        // 상영관 총 좌석 수 업데이트
+        theater.setTotalSeats(theater.getTotalSeats() + savedSeats.size());
+        
+        return savedSeats;
+    }
+    
+    /**
+     * 특정 상영관의 모든 좌석 조회
+     */
+    @Transactional(readOnly = true)
+    public List<Seat> findSeatsByTheaterId(Long theaterId) {
+        return seatRepository.findByTheater_TheaterId(theaterId);
+    }
+    
+    /**
+     * 특정 상영관의 좌석 수 조회
+     */
+    @Transactional(readOnly = true)
+    public int countSeatsByTheaterId(Long theaterId) {
+        return seatRepository.countByTheater_TheaterId(theaterId);
+    }
+    
+    /**
+     * 특정 상영관의 모든 좌석 삭제
+     */
+    @Transactional
+    public void deleteAllSeatsByTheaterId(Long theaterId) {
+        List<Seat> seats = seatRepository.findByTheater_TheaterId(theaterId);
+        seatRepository.deleteAll(seats);
+        
+        // 상영관 총 좌석 수 업데이트
+        Theater theater = theaterRepository.findById(theaterId)
+                .orElseThrow(() -> new RuntimeException("상영관을 찾을 수 없습니다: " + theaterId));
+        theater.setTotalSeats(0);
     }
 }

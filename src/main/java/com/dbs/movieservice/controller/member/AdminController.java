@@ -1,6 +1,8 @@
 package com.dbs.movieservice.controller.member;
 
 import com.dbs.movieservice.controller.dto.*;
+import com.dbs.movieservice.controller.dto.TheaterCreateRequest;
+import com.dbs.movieservice.controller.dto.SeatBulkCreateRequest;
 import com.dbs.movieservice.domain.member.ClientLevel;
 import com.dbs.movieservice.domain.member.Customer;
 import com.dbs.movieservice.domain.movie.Actor;
@@ -31,13 +33,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
+import lombok.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -274,12 +281,12 @@ public class AdminController {
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
     public ResponseEntity<List<Theater>> getAllTheaters() {
-        List<Theater> theaters = theaterService.findAllTheaters();
+        List<Theater> theaters = theaterService.getAllTheaters();
         return ResponseEntity.ok(theaters);
     }
 
     @PostMapping("/theaters")
-    @Operation(summary = "상영관 생성", description = "새로운 상영관을 시스템에 등록합니다.")
+    @Operation(summary = "상영관과 좌석 생성", description = "새로운 상영관과 지정된 개수의 좌석을 함께 생성합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "생성 성공",
                 content = @Content(schema = @Schema(implementation = Theater.class))),
@@ -287,13 +294,11 @@ public class AdminController {
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<Theater> createTheater(@Valid @RequestBody TheaterRequest request) {
-        Theater theater = new Theater();
-        theater.setTheaterName(request.getTheaterName());
-        theater.setTotalSeats(request.getTotalSeats());
-        
-        Theater savedTheater = theaterService.saveTheater(theater);
-        return ResponseEntity.ok(savedTheater);
+    public ResponseEntity<Theater> createTheaterWithSeats(@Valid @RequestBody CreateTheaterRequest request) {
+        Theater createdTheater = theaterService.createTheaterWithLimitedSeats(
+            request.getTheaterName(), request.getRows(), request.getColumns(), request.getTotalSeats()
+        );
+        return ResponseEntity.ok(createdTheater);
     }
 
     @PutMapping("/theaters/{theaterId}")
@@ -329,6 +334,21 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/theaters/{theaterId}/recalculate-seats")
+    @Operation(summary = "상영관 좌석 수 재계산", description = "상영관의 실제 좌석 수를 재계산하여 업데이트합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "재계산 성공",
+                content = @Content(schema = @Schema(implementation = Theater.class))),
+        @ApiResponse(responseCode = "404", description = "상영관을 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<Theater> recalculateTheaterSeats(
+            @Parameter(description = "상영관 ID", example = "1", required = true) @PathVariable Long theaterId) {
+        Theater updatedTheater = theaterService.recalculateTotalSeats(theaterId);
+        return ResponseEntity.ok(updatedTheater);
+    }
+
     // 좌석 관리
     
     @GetMapping("/seats")
@@ -345,7 +365,7 @@ public class AdminController {
     }
 
     @PostMapping("/seats")
-    @Operation(summary = "좌석 생성", description = "새로운 좌석을 시스템에 등록합니다.")
+    @Operation(summary = "좌석 생성 (개별)", description = "새로운 좌석을 시스템에 등록합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "생성 성공",
                 content = @Content(schema = @Schema(implementation = Seat.class))),
@@ -353,11 +373,25 @@ public class AdminController {
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<Seat> createSeat(@Valid @RequestBody SeatRequest request) {
+    public ResponseEntity<Seat> createSingleSeat(@Valid @RequestBody SeatRequest request) {
         Seat savedSeat = seatService.saveSeat(
             request.getTheaterId(), request.getRowNumber(), request.getColumnNumber()
         );
         return ResponseEntity.ok(savedSeat);
+    }
+
+    @PostMapping("/seats/bulk")
+    @Operation(summary = "좌석 일괄 생성", description = "특정 상영관에 여러 좌석을 한 번에 생성합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "생성 성공",
+                content = @Content(schema = @Schema(implementation = Seat.class))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<List<Seat>> createSeatsInBulk(@Valid @RequestBody SeatBulkCreateRequest request) {
+        List<Seat> savedSeats = seatService.createSeatsInBulk(request.getTheaterId(), request.getSeats());
+        return ResponseEntity.ok(savedSeats);
     }
 
     @PutMapping("/seats/{seatId}")
@@ -393,6 +427,34 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/theaters/{theaterId}/seats")
+    @Operation(summary = "특정 상영관의 모든 좌석 조회", description = "특정 상영관에 속한 모든 좌석을 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "404", description = "상영관을 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<List<Seat>> getTheaterSeats(
+            @Parameter(description = "상영관 ID", example = "1", required = true) @PathVariable Long theaterId) {
+        List<Seat> seats = seatService.findSeatsByTheaterId(theaterId);
+        return ResponseEntity.ok(seats);
+    }
+
+    @DeleteMapping("/theaters/{theaterId}/seats")
+    @Operation(summary = "특정 상영관의 모든 좌석 삭제", description = "특정 상영관에 속한 모든 좌석을 삭제합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "삭제 성공"),
+        @ApiResponse(responseCode = "404", description = "상영관을 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<Void> deleteAllTheaterSeats(
+            @Parameter(description = "상영관 ID", example = "1", required = true) @PathVariable Long theaterId) {
+        seatService.deleteAllSeatsByTheaterId(theaterId);
+        return ResponseEntity.noContent().build();
+    }
+
     // 상영일정 관리
     
     @GetMapping("/schedules")
@@ -409,7 +471,7 @@ public class AdminController {
     }
 
     @PostMapping("/schedules")
-    @Operation(summary = "상영일정 생성", description = "새로운 상영일정을 시스템에 등록합니다.")
+    @Operation(summary = "상영일정 생성 (간단)", description = "간단한 정보로 새로운 상영일정을 생성합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "생성 성공",
                 content = @Content(schema = @Schema(implementation = Schedule.class))),
@@ -417,7 +479,22 @@ public class AdminController {
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<Schedule> createSchedule(@Valid @RequestBody ScheduleRequest request) {
+    public ResponseEntity<Schedule> createSchedule(@Valid @RequestBody CreateScheduleRequest request) {
+        Schedule schedule = scheduleService.createSchedule(request.getTheaterId(), request.getMovieId(),
+                request.getScheduleStartTime());
+        return ResponseEntity.ok(schedule);
+    }
+
+    @PostMapping("/schedules/advanced")
+    @Operation(summary = "상영일정 생성 (고급)", description = "상세한 정보를 포함하여 새로운 상영일정을 생성합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "생성 성공",
+                content = @Content(schema = @Schema(implementation = Schedule.class))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<Schedule> createAdvancedSchedule(@Valid @RequestBody AdvancedScheduleRequest request) {
         Schedule savedSchedule = scheduleService.saveSchedule(
             request.getMovieId(), request.getTheaterId(), request.getScheduleDate(),
             request.getScheduleSequence(), request.getScheduleStartTime()
@@ -741,4 +818,108 @@ public class AdminController {
         CustomerResponse updatedUser = customerService.updateCustomerLevel(customerInputId, levelId);
         return ResponseEntity.ok(updatedUser);
     }
+
+    // ========== TemporalAdmin 통합 - 단순 생성 API ==========
+
+    @PostMapping("/create-seat")
+    @Operation(summary = "좌석 생성 (TemporalAdmin 호환)", description = "지정된 상영관에 좌석을 생성합니다.")
+    public ResponseEntity<Seat> createSeat(@Valid @RequestBody CreateSeatRequest request) {
+        Theater theater = new Theater();
+        theater.setTheaterId(request.getTheaterId());
+
+        Seat seat = new Seat();
+        seat.setRowNumber(request.getSeatRow());
+        seat.setColumnNumber(request.getSeatCol());
+        seat.setTheater(theater);
+
+        Seat createdSeat = seatService.createSeat(seat);
+        return ResponseEntity.ok(createdSeat);
+    }
+
+    // ========== TemporalAdmin 통합 DTO들 ==========
+
+    /**
+     * createTheater 전용DTO
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CreateTheaterRequest {
+        @NotNull(message = "상영관 이름은 필수입니다")
+        private String theaterName;
+        
+        @NotNull(message = "행 수는 필수입니다")
+        private Integer rows;
+        
+        @NotNull(message = "열 수는 필수입니다")
+        private Integer columns;
+        
+        @NotNull(message = "총 좌석수는 필수입니다")
+        private Integer totalSeats;
+    }
+
+    /**
+     * createSeat 전용 DTO
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CreateSeatRequest {
+        @NotNull(message = "좌석 행 번호는 필수입니다.")
+        private Integer seatRow;
+
+        @NotNull(message = "좌석 열 번호는 필수입니다.")
+        private Integer seatCol;
+
+        @NotNull(message = "상영관 ID는 필수입니다.")
+        private Long theaterId;
+    }
+
+    /**
+     * createSchedule 전용 DTO
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CreateScheduleRequest {
+        @NotNull(message = "상영관 ID는 필수입니다.")
+        private Long theaterId;
+
+        @NotNull(message = "영화 ID는 필수입니다.")
+        private Long movieId;
+
+        @NotNull(message = "시작 시간은 필수입니다.")
+        @Future(message = "시작 시간은 현재보다 이후여야 합니다.")
+        private LocalDateTime scheduleStartTime;
+    }
+
+    /**
+     * 고급 상영일정 생성 DTO
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AdvancedScheduleRequest {
+        @NotNull(message = "영화 ID는 필수입니다.")
+        private Long movieId;
+
+        @NotNull(message = "상영관 ID는 필수입니다.")
+        private Long theaterId;
+
+        @NotNull(message = "상영 날짜는 필수입니다.")
+        @Future(message = "상영 날짜는 현재보다 이후여야 합니다.")
+        private LocalDate scheduleDate;
+
+        @NotNull(message = "상영 회차는 필수입니다.")
+        private Integer scheduleSequence;
+
+        @NotNull(message = "시작 시간은 필수입니다.")
+        @Future(message = "시작 시간은 현재보다 이후여야 합니다.")
+        private LocalDateTime scheduleStartTime;
+    }
+
 }

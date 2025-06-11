@@ -45,8 +45,8 @@ public class IssueCoupon {
     public void useCoupon() {
         this.isUsed = true;
         this.usedAt = LocalDateTime.now();
-    }
-    
+        }
+
     // 쿠폰 사용 취소 메서드
     public void cancelUsage() {
         this.isUsed = false;

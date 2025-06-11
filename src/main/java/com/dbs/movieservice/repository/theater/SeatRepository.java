@@ -9,6 +9,8 @@ import java.util.Optional;
 
 public interface SeatRepository extends JpaRepository<Seat, Long> {
     List<Seat> findByTheater_TheaterId(Long theaterId);
+    
+    int countByTheater_TheaterId(Long theaterId);
 
     Seat findByTheaterAndRowNumberAndColumnNumber(Theater theater, Integer rowNumber, Integer columnNumber);
 }

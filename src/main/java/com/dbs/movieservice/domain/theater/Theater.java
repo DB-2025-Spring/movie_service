@@ -23,4 +23,10 @@ public class Theater {
     
     @Column(name = "total_seats", nullable = false)
     private Integer totalSeats;
+    
+    @Column(name = "row_count")
+    private Integer rows;
+    
+    @Column(name = "column_count")
+    private Integer columns;
 }
