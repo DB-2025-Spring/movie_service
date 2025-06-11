@@ -1,5 +1,6 @@
 package com.dbs.movieservice.service.theater;
 
+import com.dbs.movieservice.controller.dto.ScheduleResponse;
 import com.dbs.movieservice.domain.movie.Movie;
 import com.dbs.movieservice.domain.theater.Schedule;
 import com.dbs.movieservice.domain.theater.Seat;
@@ -140,11 +141,19 @@ public class ScheduleService {
     // ========== Admin용 추가 메서드들 ==========
 
     /**
-     * 모든 상영일정 조회
+     * 모든 상영일정 조회 (DTO 반환)
      */
     @Transactional(readOnly = true)
-    public List<Schedule> findAllSchedules() {
-        return scheduleRepository.findAll();
+    public List<ScheduleResponse> findAllSchedules() {
+        List<Schedule> schedules = scheduleRepository.findAll();
+        return schedules.stream()
+                .map(schedule -> {
+                    // 연관 엔티티 정보를 명시적으로 로딩
+                    schedule.getMovie().getMovieName(); // lazy loading 초기화
+                    schedule.getTheater().getTheaterName(); // lazy loading 초기화
+                    return ScheduleResponse.from(schedule);
+                })
+                .toList();
     }
 
     /**

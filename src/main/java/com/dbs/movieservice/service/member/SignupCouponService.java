@@ -57,11 +57,8 @@ public class SignupCouponService {
                 return false;
             }
 
-            // 신규가입쿠폰 발급
+            // 신규가입쿠폰 발급 (새로운 구조 사용)
             IssueCoupon issueCoupon = new IssueCoupon();
-            IssueCoupon.IssueCouponId id = new IssueCoupon.IssueCouponId(
-                    customer.getCustomerId(), signupCoupon.getCouponId());
-            issueCoupon.setId(id);
             issueCoupon.setCustomer(customer);
             issueCoupon.setCoupon(signupCoupon);
 

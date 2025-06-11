@@ -100,9 +100,9 @@ public class LevelUpService {
     }
 
     /**
-     * 등급업 축하 쿠폰 발급
+     * 등급업 축하 쿠폰 발급 (관리자 등급 변경 시에도 사용)
      */
-    private void issueLevelUpCoupon(Customer customer) {
+    public void issueLevelUpCoupon(Customer customer) {
         try {
             // 등급업쿠폰 조회 (쿠폰명으로 검색)
             Optional<Coupon> levelUpCouponOpt = couponRepository.findAll().stream()
@@ -117,20 +117,8 @@ public class LevelUpService {
 
             Coupon levelUpCoupon = levelUpCouponOpt.get();
 
-            // 이미 등급업쿠폰을 받았는지 확인 (중복 발급 방지)
-            boolean alreadyIssued = issueCouponRepository.existsByCustomerIdAndCouponId(
-                    customer.getCustomerId(), levelUpCoupon.getCouponId());
-
-            if (alreadyIssued) {
-                log.debug("Level up coupon already issued to customer: {}", customer.getCustomerInputId());
-                return;
-            }
-
-            // 등급업 축하 쿠폰 발급
+            // 등급업 축하 쿠폰 발급 (새로운 구조에서는 중복 발급 허용)
             IssueCoupon issueCoupon = new IssueCoupon();
-            IssueCoupon.IssueCouponId id = new IssueCoupon.IssueCouponId(
-                    customer.getCustomerId(), levelUpCoupon.getCouponId());
-            issueCoupon.setId(id);
             issueCoupon.setCustomer(customer);
             issueCoupon.setCoupon(levelUpCoupon);
 

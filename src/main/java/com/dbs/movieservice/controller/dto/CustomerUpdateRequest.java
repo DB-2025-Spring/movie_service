@@ -15,26 +15,19 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "고객 프로필 수정 요청 DTO")
+@Schema(description = "고객 정보 수정 요청 DTO")
 public class CustomerUpdateRequest {
     
-    @Schema(description = "현재 비밀번호 (비밀번호 변경시 필수)", example = "currentPassword123!")
-    private String currentPassword;
-    
-    @Size(min = 8, max = 20, message = "비밀번호는 8자 이상 20자 이하여야 합니다.")
-    @Pattern(regexp = "^[a-zA-Z0-9!@#$%^&*()\\-_=+]*$", message = "비밀번호는 영어 소문자, 대문자, 숫자, 특수문자(!@#$%^&*()-_=+)만 가능합니다.")
-    @Schema(description = "새 비밀번호 (선택사항)", example = "newPassword123!")
-    private String newPassword;
-    
-    @Size(min = 2, max = 50, message = "이름은 2자 이상 50자 이하여야 합니다.")
-    @Schema(description = "고객 이름 (선택사항)", example = "홍길동")
+    @NotBlank
+    @Size(min = 2, max = 50)
+    @Schema(description = "고객 이름", example = "홍길동", required = true)
     private String customerName;
     
-    @Past(message = "생년월일은 과거 날짜여야 합니다.")
-    @Schema(description = "생년월일 (선택사항)", example = "1990-01-01")
-    private LocalDate birthDate;
-    
-    @Pattern(regexp = "^\\d{3}-\\d{4}-\\d{4}$", message = "전화번호는 000-0000-0000 형식이어야 합니다.")
-    @Schema(description = "전화번호 (선택사항)", example = "010-1234-5678")
+    @NotBlank
+    @Pattern(regexp = "^010-\\d{4}-\\d{4}$", message = "전화번호 형식이 올바르지 않습니다. (010-1234-5678)")
+    @Schema(description = "전화번호", example = "010-1234-5678", required = true)
     private String phone;
+    
+    @Schema(description = "생년월일", example = "1990-01-01")
+    private LocalDate birthDate;
 } 

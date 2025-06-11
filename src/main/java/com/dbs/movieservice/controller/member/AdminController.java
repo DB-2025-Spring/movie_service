@@ -2,6 +2,7 @@ package com.dbs.movieservice.controller.member;
 
 import com.dbs.movieservice.controller.dto.*;
 import com.dbs.movieservice.domain.member.ClientLevel;
+import com.dbs.movieservice.domain.member.Customer;
 import com.dbs.movieservice.domain.movie.Actor;
 import com.dbs.movieservice.domain.movie.Genre;
 import com.dbs.movieservice.domain.movie.Movie;
@@ -11,6 +12,7 @@ import com.dbs.movieservice.domain.theater.Theater;
 import com.dbs.movieservice.domain.ticketing.Coupon;
 import com.dbs.movieservice.dto.GenreDto;
 import com.dbs.movieservice.service.member.ClientLevelService;
+import com.dbs.movieservice.service.member.CustomerService;
 import com.dbs.movieservice.service.movie.ActorService;
 import com.dbs.movieservice.service.movie.GenreService;
 import com.dbs.movieservice.service.movie.MovieService;
@@ -56,6 +58,7 @@ public class AdminController {
     private final CouponService couponService;
     private final ClientLevelService clientLevelService;
     private final IssueCouponService issueCouponService;
+    private final CustomerService customerService;
 
     // 영화 관리
     
@@ -396,12 +399,12 @@ public class AdminController {
     @Operation(summary = "모든 상영일정 조회", description = "시스템에 등록된 모든 상영일정 목록을 조회합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "조회 성공",
-                content = @Content(schema = @Schema(implementation = Schedule.class))),
+                content = @Content(schema = @Schema(implementation = ScheduleResponse.class))),
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<List<Schedule>> getAllSchedules() {
-        List<Schedule> schedules = scheduleService.findAllSchedules();
+    public ResponseEntity<List<ScheduleResponse>> getAllSchedules() {
+        List<ScheduleResponse> schedules = scheduleService.findAllSchedules();
         return ResponseEntity.ok(schedules);
     }
 
@@ -649,5 +652,93 @@ public class AdminController {
         
         log.info("Admin retrieved {} coupons for customer: {}", coupons.size(), customerInputId);
         return ResponseEntity.ok(coupons);
+    }
+
+    @PutMapping("/use-coupon/{issueId}")
+    @Operation(summary = "쿠폰 사용 처리", description = "관리자가 특정 발급된 쿠폰을 사용 처리합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "쿠폰 사용 처리 성공"),
+        @ApiResponse(responseCode = "400", description = "이미 사용된 쿠폰"),
+        @ApiResponse(responseCode = "404", description = "발급된 쿠폰을 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<?> useCoupon(
+            @Parameter(description = "발급 ID", example = "1", required = true) 
+            @PathVariable Long issueId) {
+        issueCouponService.useCoupon(issueId);
+        
+        log.info("Admin marked coupon issue {} as used", issueId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/cancel-coupon-usage/{issueId}")
+    @Operation(summary = "쿠폰 사용 취소", description = "관리자가 사용된 쿠폰의 사용 상태를 취소합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "쿠폰 사용 취소 성공"),
+        @ApiResponse(responseCode = "400", description = "사용되지 않은 쿠폰"),
+        @ApiResponse(responseCode = "404", description = "발급된 쿠폰을 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<?> cancelCouponUsage(
+            @Parameter(description = "발급 ID", example = "1", required = true) 
+            @PathVariable Long issueId) {
+        issueCouponService.cancelCouponUsage(issueId);
+        
+        log.info("Admin canceled coupon usage for issue {}", issueId);
+        return ResponseEntity.ok().build();
+    }
+
+    // 고객 관리
+    
+    @GetMapping("/users")
+    @Operation(summary = "모든 고객 조회", description = "시스템에 등록된 모든 고객 목록을 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "조회 성공",
+                content = @Content(schema = @Schema(implementation = CustomerResponse.class))),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<List<CustomerResponse>> getAllUsers() {
+        List<CustomerResponse> users = customerService.findAllCustomers();
+        return ResponseEntity.ok(users);
+    }
+
+    @PutMapping("/users/{customerInputId}")
+    @Operation(summary = "사용자 정보 수정", description = "특정 사용자의 정보를 수정합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "수정 성공",
+                content = @Content(schema = @Schema(implementation = CustomerResponse.class))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<CustomerResponse> updateUser(
+            @Parameter(description = "사용자 ID", example = "testuser123", required = true) 
+            @PathVariable String customerInputId,
+            @Valid @RequestBody CustomerUpdateRequest request) {
+        CustomerResponse updatedUser = customerService.updateCustomer(customerInputId, request);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @PutMapping("/users/{customerInputId}/level")
+    @Operation(summary = "사용자 등급 직접 변경", description = "관리자가 특정 사용자의 등급을 직접 변경합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "등급 변경 성공",
+                content = @Content(schema = @Schema(implementation = CustomerResponse.class))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+        @ApiResponse(responseCode = "404", description = "사용자 또는 등급을 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<CustomerResponse> updateUserLevel(
+            @Parameter(description = "사용자 ID", example = "testuser123", required = true) 
+            @PathVariable String customerInputId,
+            @Parameter(description = "새로운 등급 ID", example = "3", required = true) 
+            @RequestParam Integer levelId) {
+        CustomerResponse updatedUser = customerService.updateCustomerLevel(customerInputId, levelId);
+        return ResponseEntity.ok(updatedUser);
     }
 }

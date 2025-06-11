@@ -52,19 +52,7 @@ public class CustomerProfileService {
         Customer customer = customerRepository.findByCustomerInputIdWithLevel(customerInputId)
                 .orElseThrow(() -> new RuntimeException("Customer not found: " + customerInputId));
 
-        // 비밀번호 변경 처리
-        if (request.getNewPassword() != null && !request.getNewPassword().trim().isEmpty()) {
-            if (request.getCurrentPassword() == null || request.getCurrentPassword().trim().isEmpty()) {
-                throw new RuntimeException("현재 비밀번호가 필요합니다.");
-            }
-            
-            if (!passwordEncoder.matches(request.getCurrentPassword(), customer.getCustomerPw())) {
-                throw new RuntimeException("현재 비밀번호가 일치하지 않습니다.");
-            }
-            
-            customer.setCustomerPw(passwordEncoder.encode(request.getNewPassword()));
-            log.info("Password updated for customer: {}", customerInputId);
-        }
+        // 관리자 페이지에서는 비밀번호 변경 기능을 제공하지 않음
 
         // 기타 정보 업데이트
         if (request.getCustomerName() != null && !request.getCustomerName().trim().isEmpty()) {

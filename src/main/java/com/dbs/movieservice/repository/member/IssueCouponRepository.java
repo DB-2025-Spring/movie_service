@@ -7,24 +7,26 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface IssueCouponRepository extends JpaRepository<IssueCoupon, IssueCoupon.IssueCouponId> {
+public interface IssueCouponRepository extends JpaRepository<IssueCoupon, Long> {
     
     /**
-     * 특정 고객의 발급된 쿠폰 목록 조회 (customerId 기준)
+     * 특정 고객의 발급된 쿠폰 목록 조회 (customerId 기준) - 최신순 정렬
      */
     @Query("SELECT ic FROM IssueCoupon ic " +
            "JOIN FETCH ic.coupon c " +
            "JOIN FETCH ic.customer cu " +
-           "WHERE cu.customerId = :customerId")
+           "WHERE cu.customerId = :customerId " +
+           "ORDER BY ic.issuedAt DESC")
     List<IssueCoupon> findIssuedCouponsByCustomerId(@Param("customerId") Long customerId);
     
     /**
-     * 특정 고객의 발급된 쿠폰 목록 조회 (customerInputId 기준)
+     * 특정 고객의 발급된 쿠폰 목록 조회 (customerInputId 기준) - 최신순 정렬
      */
     @Query("SELECT ic FROM IssueCoupon ic " +
            "JOIN FETCH ic.coupon c " +
            "JOIN FETCH ic.customer cu " +
-           "WHERE cu.customerInputId = :customerInputId")
+           "WHERE cu.customerInputId = :customerInputId " +
+           "ORDER BY ic.issuedAt DESC")
     List<IssueCoupon> findIssuedCouponsByCustomerInputId(@Param("customerInputId") String customerInputId);
     
     /**
@@ -33,4 +35,23 @@ public interface IssueCouponRepository extends JpaRepository<IssueCoupon, IssueC
     @Query("SELECT COUNT(ic) > 0 FROM IssueCoupon ic " +
            "WHERE ic.customer.customerId = :customerId AND ic.coupon.couponId = :couponId")
     boolean existsByCustomerIdAndCouponId(@Param("customerId") Long customerId, @Param("couponId") Long couponId);
+    
+    /**
+     * 특정 고객의 특정 쿠폰 발급 내역 조회
+     */
+    @Query("SELECT ic FROM IssueCoupon ic " +
+           "WHERE ic.customer.customerId = :customerId AND ic.coupon.couponId = :couponId")
+    List<IssueCoupon> findByCustomerIdAndCouponId(@Param("customerId") Long customerId, @Param("couponId") Long couponId);
+    
+    /**
+     * 특정 고객의 사용 가능한 쿠폰 목록 조회 (미사용 + 유효한 쿠폰)
+     */
+    @Query("SELECT ic FROM IssueCoupon ic " +
+           "JOIN FETCH ic.coupon c " +
+           "JOIN FETCH ic.customer cu " +
+           "WHERE cu.customerId = :customerId " +
+           "AND ic.isUsed = false " +
+           "AND c.endDate >= CURRENT_DATE " +
+           "ORDER BY ic.issuedAt DESC")
+    List<IssueCoupon> findAvailableCouponsByCustomerId(@Param("customerId") Long customerId);
 }
