@@ -14,11 +14,13 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     List<Schedule> findByScheduleDateAndTheater_TheaterId(LocalDate scheduleDate, Long theaterId);
     List<Schedule> findByScheduleDateAndMovie_MovieId(LocalDate scheduleDate, Long movieId);
     @Query("SELECT s FROM Schedule s " +
+            "LEFT JOIN FETCH s.theater " +
             "WHERE s.movie.movieId = :movieId " +
             "AND s.scheduleStartTime BETWEEN :startOfToday AND :endOfTargetDay")
-    List<Schedule> findSchedulesForNext7Days(@Param("movieId") Long movieId,
-                                                @Param("startOfToday") LocalDateTime startOfToday,
-                                                @Param("endOfTargetDay") LocalDateTime endOfTargetDay);
+    List<Schedule> findSchedulesForNext7Days(
+            @Param("movieId") Long movieId,
+            @Param("startOfToday") LocalDateTime startOfToday,
+            @Param("endOfTargetDay") LocalDateTime endOfTargetDay);
 
 
     /**

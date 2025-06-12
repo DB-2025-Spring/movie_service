@@ -17,7 +17,7 @@ public interface SeatAvailableRepository extends JpaRepository<SeatAvailable, Se
             "GROUP BY sa.id.scheduleId")
     List<Object[]> countAvailableSeatsByScheduleIds(@Param("scheduleIds") List<Long> scheduleIds);
 
-    @Query("SELECT sa FROM SeatAvailable sa WHERE sa.id.scheduleId = :scheduleId AND sa.isBooked='F'")
+    @Query("SELECT sa FROM SeatAvailable sa WHERE sa.id.scheduleId = :scheduleId")
     List<SeatAvailable> findByScheduleId(@Param("scheduleId") Long scheduleId);
 
     /**

@@ -15,6 +15,7 @@ import com.dbs.movieservice.service.member.ClientLevelService;
 import com.dbs.movieservice.service.member.CustomerService;
 import com.dbs.movieservice.service.movie.ActorService;
 import com.dbs.movieservice.service.movie.GenreService;
+import com.dbs.movieservice.service.movie.MovieGenreService;
 import com.dbs.movieservice.service.movie.MovieService;
 import com.dbs.movieservice.service.theater.ScheduleService;
 import com.dbs.movieservice.service.theater.SeatService;
@@ -64,6 +65,7 @@ public class AdminController {
     private final ClientLevelService clientLevelService;
     private final IssueCouponService issueCouponService;
     private final CustomerService customerService;
+    private final MovieGenreService movieGenreService;
 
     // 영화 관리
     
@@ -844,6 +846,21 @@ public class AdminController {
         return ResponseEntity.ok(createdSeat);
     }
 
+    @PostMapping("/movie-genre")
+    @Operation(summary ="영화장르 생성기", description="영화id와 genreid를 받아 생성")
+    public ResponseEntity<?> createMovieGenre(@RequestBody CreateMovieGenreRequest request) {
+        movieGenreService.createMovieGenre(request.getMovieId(), request.getGenreId());
+        return ResponseEntity.ok().build();
+    }
+
+        @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CreateMovieGenreRequest {
+        Long MovieId;
+        Long GenreId;
+    }
     // ========== TemporalAdmin 통합 DTO들 ==========
 
     /**

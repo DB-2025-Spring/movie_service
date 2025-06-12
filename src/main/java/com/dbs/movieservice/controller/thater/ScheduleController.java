@@ -37,7 +37,7 @@ public class ScheduleController {
     private final SeatAvailableService seatAvailableService;
     private final MovieService movieService;
 
-
+    //todo n+1 쿼리로 db조회함. 성능개선 여지 있음.
     @GetMapping("/available-schedule")
     @Operation(
             summary = "7일 간의 상영 스케줄 조회",
@@ -58,9 +58,24 @@ public class ScheduleController {
         if (schedules.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
-        List<ScheduleDto> scheduleDtos = schedules.stream()
-                .map(ScheduleDto::new)
+
+        // 스케줄 ID 목록 추출
+        List<Long> scheduleIds = schedules.stream()
+                .map(Schedule::getScheduleId)
                 .toList();
+
+        // 스케줄 ID → 남은 좌석 수 맵 조회
+        Map<Long, Long> availableSeatMap = seatAvailableService.countAvailableSeatMap(scheduleIds);
+
+        // DTO 변환 후 남은 좌석 수 채움
+        List<ScheduleDto> scheduleDtos = schedules.stream()
+                .map(schedule -> {
+                    ScheduleDto dto = new ScheduleDto(schedule);
+                    dto.setAvailableSeatCount(availableSeatMap.getOrDefault(schedule.getScheduleId(), 0L).intValue());
+                    return dto;
+                })
+                .toList();
+
         return ResponseEntity.ok(scheduleDtos);
     }
 
@@ -188,15 +203,16 @@ public class ScheduleController {
     @Getter
     @Setter
     @AllArgsConstructor
-    public class ScheduleDto {
+    public static class ScheduleDto {
         private Long scheduleId;
         private Long movieId;
         private Long theaterId;
+        private String theaterName;
         private LocalDate scheduleDate;
         private Integer scheduleSequence;
         private LocalDateTime scheduleStartTime;
         private LocalDateTime scheduleEndTime;
-
+        private Integer availableSeatCount;
         public ScheduleDto(Schedule schedule) {
             this.scheduleId = schedule.getScheduleId();
             this.movieId = schedule.getMovie().getMovieId();
@@ -205,6 +221,7 @@ public class ScheduleController {
             this.scheduleSequence = schedule.getScheduleSequence();
             this.scheduleStartTime = schedule.getScheduleStartTime();
             this.scheduleEndTime = schedule.getScheduleEndTime();
+            this.theaterName = schedule.getTheater().getTheaterName();
         }
     }
 
