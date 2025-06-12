@@ -353,62 +353,68 @@ public class AdminController {
     @Operation(summary = "모든 좌석 조회", description = "시스템에 등록된 모든 좌석 목록을 조회합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "조회 성공",
-                content = @Content(schema = @Schema(implementation = Seat.class))),
+                content = @Content(schema = @Schema(implementation = SeatDto.class))),
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<List<Seat>> getAllSeats() {
+    public ResponseEntity<List<SeatDto>> getAllSeats() {
         List<Seat> seats = seatService.findAllSeats();
-        return ResponseEntity.ok(seats);
+        List<SeatDto> seatDtos = seats.stream()
+                .map(SeatDto::from)
+                .toList();
+        return ResponseEntity.ok(seatDtos);
     }
 
     @PostMapping("/seats")
     @Operation(summary = "좌석 생성 (개별)", description = "새로운 좌석을 시스템에 등록합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "생성 성공",
-                content = @Content(schema = @Schema(implementation = Seat.class))),
+                content = @Content(schema = @Schema(implementation = SeatDto.class))),
         @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<Seat> createSingleSeat(@Valid @RequestBody SeatRequest request) {
+    public ResponseEntity<SeatDto> createSingleSeat(@Valid @RequestBody SeatRequest request) {
         Seat savedSeat = seatService.saveSeat(
             request.getTheaterId(), request.getRowNumber(), request.getColumnNumber()
         );
-        return ResponseEntity.ok(savedSeat);
+        return ResponseEntity.ok(SeatDto.from(savedSeat));
     }
 
     @PostMapping("/seats/bulk")
     @Operation(summary = "좌석 일괄 생성", description = "특정 상영관에 여러 좌석을 한 번에 생성합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "생성 성공",
-                content = @Content(schema = @Schema(implementation = Seat.class))),
+                content = @Content(schema = @Schema(implementation = SeatDto.class))),
         @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<List<Seat>> createSeatsInBulk(@Valid @RequestBody SeatBulkCreateRequest request) {
+    public ResponseEntity<List<SeatDto>> createSeatsInBulk(@Valid @RequestBody SeatBulkCreateRequest request) {
         List<Seat> savedSeats = seatService.createSeatsInBulk(request.getTheaterId(), request.getSeats());
-        return ResponseEntity.ok(savedSeats);
+        List<SeatDto> seatDtos = savedSeats.stream()
+                .map(SeatDto::from)
+                .toList();
+        return ResponseEntity.ok(seatDtos);
     }
 
     @PutMapping("/seats/{seatId}")
     @Operation(summary = "좌석 수정", description = "기존 좌석 정보를 수정합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "수정 성공",
-                content = @Content(schema = @Schema(implementation = Seat.class))),
+                content = @Content(schema = @Schema(implementation = SeatDto.class))),
         @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
         @ApiResponse(responseCode = "404", description = "좌석을 찾을 수 없음"),
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<Seat> updateSeat(
+    public ResponseEntity<SeatDto> updateSeat(
             @Parameter(description = "좌석 ID", example = "1", required = true) @PathVariable Long seatId,
             @Valid @RequestBody SeatRequest request) {
         Seat updatedSeat = seatService.updateSeat(
             seatId, request.getTheaterId(), request.getRowNumber(), request.getColumnNumber()
         );
-        return ResponseEntity.ok(updatedSeat);
+        return ResponseEntity.ok(SeatDto.from(updatedSeat));
     }
 
     @DeleteMapping("/seats/{seatId}")
@@ -428,15 +434,19 @@ public class AdminController {
     @GetMapping("/theaters/{theaterId}/seats")
     @Operation(summary = "특정 상영관의 모든 좌석 조회", description = "특정 상영관에 속한 모든 좌석을 조회합니다.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "200", description = "조회 성공",
+                content = @Content(schema = @Schema(implementation = SeatDto.class))),
         @ApiResponse(responseCode = "404", description = "상영관을 찾을 수 없음"),
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<List<Seat>> getTheaterSeats(
+    public ResponseEntity<List<SeatDto>> getTheaterSeats(
             @Parameter(description = "상영관 ID", example = "1", required = true) @PathVariable Long theaterId) {
         List<Seat> seats = seatService.findSeatsByTheaterId(theaterId);
-        return ResponseEntity.ok(seats);
+        List<SeatDto> seatDtos = seats.stream()
+                .map(SeatDto::from)
+                .toList();
+        return ResponseEntity.ok(seatDtos);
     }
 
     @DeleteMapping("/theaters/{theaterId}/seats")

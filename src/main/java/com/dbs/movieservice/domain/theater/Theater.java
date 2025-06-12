@@ -1,6 +1,7 @@
 package com.dbs.movieservice.domain.theater;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +12,7 @@ import lombok.ToString;
 @Entity
 @ToString
 @Table(name="theater")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Theater {
     @Id
     @SequenceGenerator(name = "theater_seq", sequenceName = "theater_seq", allocationSize = 1)
