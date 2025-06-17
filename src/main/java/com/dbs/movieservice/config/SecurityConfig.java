@@ -62,7 +62,7 @@ public class SecurityConfig {
                 // Swagger UI 관련 경로 허용
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**").permitAll()
                 // Public endpoints
-                    .requestMatchers("/auth/**", "/test", "/payment/success","/v2/schedules/**","/schedule/**","/ticketing/**").permitAll()
+                    .requestMatchers("/auth/**", "/test", "/payment/success","/v2/schedules/**","/schedule/**","/ticketing/**","/coupons/**","/api/customer/**").permitAll()
                 // Admin-only endpoints
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                     //Seat Parser

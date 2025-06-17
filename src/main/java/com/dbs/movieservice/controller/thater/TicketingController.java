@@ -6,6 +6,7 @@ import com.dbs.movieservice.domain.theater.Schedule;
 import com.dbs.movieservice.domain.theater.Seat;
 import com.dbs.movieservice.domain.ticketing.Payment;
 import com.dbs.movieservice.domain.ticketing.Ticket;
+import com.dbs.movieservice.repository.member.CustomerRepository;
 import com.dbs.movieservice.repository.ticketing.TicketRepository;
 import com.dbs.movieservice.service.ticketing.PaymentService;
 import com.dbs.movieservice.service.ticketing.TicketService;
@@ -37,7 +38,6 @@ public class TicketingController {
     private final TicketService ticketService;
     private final PaymentService paymentService;
     private final CustomerService customerService;
-
 //    String customerInputId = SecurityUtils.getCurrentCustomerInputId();
     //todo DTO로 response
 
@@ -114,8 +114,8 @@ public class TicketingController {
     })
     public ResponseEntity<?> createPayment(@RequestBody PaymentRequest request) {
         try {
-            Customer customer = new Customer();
-            customer.setCustomerId(request.getCustomerId());
+            String customerInputId = SecurityUtils.getCurrentCustomerInputId();
+            Customer customer = customerService.getCustomerByInputId(customerInputId);
 
             Card card = new Card();
             card.setCardId(request.getCardId());
@@ -324,7 +324,6 @@ public class TicketingController {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PaymentRequest {
-        private Long customerId;
         private List<Long> ticketIds;
         private Long cardId;
         private int usePoint;
