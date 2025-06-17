@@ -58,7 +58,6 @@ public class CouponController {
         String customerInputId = SecurityUtils.getCurrentCustomerInputId();
         
         List<IssuedCouponResponse> usableCoupons = issueCouponService.getUsableCouponsByCustomerInputId(customerInputId);
-        
         log.info("Retrieved {} usable coupons for user: {}", usableCoupons.size(), customerInputId);
         return ResponseEntity.ok(usableCoupons);
     }

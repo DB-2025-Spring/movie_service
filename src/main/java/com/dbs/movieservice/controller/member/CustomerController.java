@@ -1,9 +1,11 @@
 package com.dbs.movieservice.controller.member;
 
 import com.dbs.movieservice.controller.dto.CustomerProfileResponse;
+import com.dbs.movieservice.controller.dto.CustomerResponse;
 import com.dbs.movieservice.controller.dto.CustomerUpdateRequest;
 import com.dbs.movieservice.domain.member.Customer;
 import com.dbs.movieservice.service.member.CustomerProfileService;
+import com.dbs.movieservice.service.member.CustomerService;
 import com.dbs.movieservice.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/customer")
 @RequiredArgsConstructor
@@ -28,7 +32,6 @@ import org.springframework.web.bind.annotation.*;
 public class CustomerController {
 
     private final CustomerProfileService customerProfileService;
-
     @GetMapping("/profile")
     @Operation(summary = "내 프로필 조회", description = "현재 로그인한 사용자의 프로필 정보를 조회합니다.")
     @ApiResponses(value = {
