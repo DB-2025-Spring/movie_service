@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -73,11 +74,12 @@ public class ActorService {
      * 배우 수정
      */
     @Transactional
-    public Actor updateActor(Long actorId, String actorName) {
+    public Actor updateActor(Long actorId, String actorName, LocalDate birthDate) {
         Actor actor = actorRepository.findById(actorId)
                 .orElseThrow(() -> new RuntimeException("배우를 찾을 수 없습니다: " + actorId));
         
         actor.setActorName(actorName);
+        actor.setBirthDate(birthDate);
         
         return actorRepository.save(actor);
     }

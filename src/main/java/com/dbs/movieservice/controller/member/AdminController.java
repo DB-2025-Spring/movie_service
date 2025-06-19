@@ -171,6 +171,7 @@ public class AdminController {
     public ResponseEntity<Actor> createActor(@Valid @RequestBody ActorRequest request) {
         Actor actor = new Actor();
         actor.setActorName(request.getActorName());
+        actor.setBirthDate(request.getBirthDate());
         
         Actor savedActor = actorService.saveActor(actor);
         return ResponseEntity.ok(savedActor);
@@ -189,7 +190,8 @@ public class AdminController {
     public ResponseEntity<Actor> updateActor(
             @Parameter(description = "배우 ID", example = "1", required = true) @PathVariable Long actorId,
             @Valid @RequestBody ActorRequest request) {
-        Actor updatedActor = actorService.updateActor(actorId, request.getActorName());
+        Actor updatedActor = actorService.updateActor(actorId, request.getActorName(), 
+            request.getBirthDate());
         return ResponseEntity.ok(updatedActor);
     }
 
@@ -827,6 +829,23 @@ public class AdminController {
             @RequestParam Integer levelId) {
         CustomerResponse updatedUser = customerService.updateCustomerLevel(customerInputId, levelId);
         return ResponseEntity.ok(updatedUser);
+    }
+
+    @DeleteMapping("/users/{customerInputId}")
+    @Operation(summary = "사용자 삭제", description = "특정 사용자를 시스템에서 삭제합니다. CASCADE 방식으로 사용자의 모든 관련 데이터(리뷰, 티켓, 결제, 카드, 쿠폰 등)도 함께 삭제됩니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "삭제 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터 (관리자 삭제 시도 등)"),
+        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    public ResponseEntity<Void> deleteUser(
+            @Parameter(description = "사용자 ID", example = "testuser123", required = true) 
+            @PathVariable String customerInputId) {
+        customerService.deleteCustomer(customerInputId);
+        log.info("Admin deleted user: {} with all related data (CASCADE delete)", customerInputId);
+        return ResponseEntity.noContent().build();
     }
 
     // ========== TemporalAdmin 통합 - 단순 생성 API ==========

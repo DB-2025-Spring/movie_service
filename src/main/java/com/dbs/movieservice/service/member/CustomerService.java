@@ -139,6 +139,35 @@ public class CustomerService {
         
         return convertToCustomerResponse(savedCustomer);
     }
+    
+    /**
+     * 고객 삭제 - CASCADE 방식으로 관련 데이터도 함께 삭제
+     * @param customerInputId 삭제할 고객의 입력 아이디
+     * @throws RuntimeException 고객이 존재하지 않을 경우
+     */
+    @Transactional
+    public void deleteCustomer(String customerInputId) {
+        log.info("Deleting customer: {} with CASCADE delete (관련 데이터도 모두 삭제됩니다)", customerInputId);
+        
+        Customer customer = customerRepository.findByCustomerInputId(customerInputId)
+                .orElseThrow(() -> new RuntimeException("Customer not found: " + customerInputId));
+        
+        // 관리자는 삭제할 수 없음
+        if (Role.ROLE_ADMIN.getCode().equals(customer.getAuthority())) {
+            throw new RuntimeException("Cannot delete admin user: " + customerInputId);
+        }
+        
+        // 삭제 전 관련 데이터 로깅
+        log.info("Customer {} has {} reviews, {} tickets, {} payments, and {} issued coupons that will be deleted",
+                customerInputId,
+                customer.getReviews() != null ? customer.getReviews().size() : 0,
+                customer.getTickets() != null ? customer.getTickets().size() : 0,
+                customer.getPayments() != null ? customer.getPayments().size() : 0,
+                customer.getIssuedCoupons() != null ? customer.getIssuedCoupons().size() : 0);
+        
+        customerRepository.delete(customer);
+        log.info("Customer deleted successfully with all related data: {}", customerInputId);
+    }
 
     private CustomerResponse convertToCustomerResponse(Customer customer) {
         CustomerResponse.LevelInfo levelInfo = null;

@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,4 +19,7 @@ public class ActorRequest {
     @Size(min = 1, max = 50)
     @Schema(description = "배우명", example = "로버트 다우니 주니어", required = true)
     private String actorName;
+    
+    @Schema(description = "생년월일", example = "1965-04-04")
+    private LocalDate birthDate;
 } 

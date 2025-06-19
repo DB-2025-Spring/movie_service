@@ -1,10 +1,15 @@
 package com.dbs.movieservice.domain.member;
 
+import com.dbs.movieservice.domain.movie.Review;
+import com.dbs.movieservice.domain.ticketing.Payment;
+import com.dbs.movieservice.domain.ticketing.Ticket;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -45,6 +50,19 @@ public class Customer {
     @JoinColumn(name = "level_id", nullable = false)
     private ClientLevel level;
 
+    // 관련 엔티티와의 관계 정의 및 CASCADE 설정
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Ticket> tickets = new ArrayList<>();
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Payment> payments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<IssueCoupon> issuedCoupons = new ArrayList<>();
+
     // 포인트 증가 메서드
     public void addPoints(int amount) {
         if (amount < 0) {
@@ -77,10 +95,4 @@ public class Customer {
         }
         return this.points >= amount;
     }
-
-/*
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Review> reviews = new ArrayList<>();
-*/
-
 }

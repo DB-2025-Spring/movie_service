@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -48,6 +49,6 @@ public class Payment {
     @Column(name = "payment_key", length = 255, nullable = true)
     private String paymentKey;
 
-    @OneToMany(mappedBy = "payment", fetch = FetchType.LAZY)
-    private List<Ticket> tickets;
+    @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Ticket> tickets = new ArrayList<>();
 }
