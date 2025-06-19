@@ -14,7 +14,7 @@ import java.util.Objects;
 @Entity
 @Getter
 @Setter
-@Table(name="issue_cupon")
+@Table(name="issue_coupon")
 public class IssueCoupon {
     @Id
     @SequenceGenerator(name = "issue_coupon_seq", sequenceName = "issue_coupon_seq", allocationSize = 1)
