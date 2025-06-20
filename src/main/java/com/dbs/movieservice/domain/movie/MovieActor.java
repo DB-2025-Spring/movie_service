@@ -25,6 +25,15 @@ public class MovieActor {
     @JoinColumn(name = "actor_id")
     private Actor actor;
 
+    public MovieActor() {}
+
+    public MovieActor(Movie movie, Actor actor) {
+        this.movie = movie;
+        this.actor = actor;
+        this.id = new MovieActorId(movie.getMovieId(), actor.getActorId());
+    }
+
+
     @Getter
     @Setter
     @Embeddable
