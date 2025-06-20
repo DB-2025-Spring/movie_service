@@ -44,7 +44,42 @@ public class ActorService {
                 .toList();
     }
 
-
+    /**
+     * 배우 이름으로 검색 후 생성 또는 업데이트
+     * 1. 같은 이름의 배우가 없으면 새로 생성
+     * 2. 같은 이름의 배우가 있고 생년월일이 다르면 새로 생성
+     * 3. 같은 이름, 같은 생년월일의 배우가 있으면 기존 배우 반환
+     */
+    @Transactional
+    public Actor createOrUpdateActor(String actorName, LocalDate birthDate) {
+        List<Actor> existingActors = actorRepository.findByActorName(actorName);
+        
+        // 1. 같은 이름의 배우가 없는 경우 새로 생성
+        if (existingActors.isEmpty()) {
+            log.info("배우 '{}' 신규 등록", actorName);
+            Actor newActor = new Actor();
+            newActor.setActorName(actorName);
+            newActor.setBirthDate(birthDate);
+            return actorRepository.save(newActor);
+        }
+        
+        // 2. 같은 이름, 같은 생년월일을 가진 배우가 있는지 확인
+        for (Actor existingActor : existingActors) {
+            // 생년월일이 같거나, 둘 다 null인 경우 기존 배우 반환
+            if ((existingActor.getBirthDate() == null && birthDate == null) ||
+                (existingActor.getBirthDate() != null && existingActor.getBirthDate().equals(birthDate))) {
+                log.info("배우 '{}' 이미 존재함 (ID: {})", actorName, existingActor.getActorId());
+                return existingActor;
+            }
+        }
+        
+        // 3. 같은 이름이지만 생년월일이 다른 경우 새로 생성
+        log.info("배우 '{}' 동명이인으로 신규 등록", actorName);
+        Actor newActor = new Actor();
+        newActor.setActorName(actorName);
+        newActor.setBirthDate(birthDate);
+        return actorRepository.save(newActor);
+    }
 
     /**
      * 모든 배우 조회
