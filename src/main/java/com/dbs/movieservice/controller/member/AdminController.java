@@ -157,20 +157,17 @@ public class AdminController {
     }
 
     @PostMapping("/actors")
-    @Operation(summary = "배우 생성", description = "새로운 배우를 시스템에 등록합니다.")
+    @Operation(summary = "배우 생성", description = "새로운 배우를 시스템에 등록합니다. 같은 이름의 배우가 있으면 생년월일을 비교하여 처리합니다.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "생성 성공",
+        @ApiResponse(responseCode = "200", description = "생성 성공 또는 기존 배우 반환",
                 content = @Content(schema = @Schema(implementation = Actor.class))),
         @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
     public ResponseEntity<Actor> createActor(@Valid @RequestBody ActorRequest request) {
-        Actor actor = new Actor();
-        actor.setActorName(request.getActorName());
-        actor.setBirthDate(request.getBirthDate());
-        
-        Actor savedActor = actorService.saveActor(actor);
+        // 이름으로 검색 후 생성 또는 기존 배우 반환
+        Actor savedActor = actorService.createOrUpdateActor(request.getActorName(), request.getBirthDate());
         return ResponseEntity.ok(savedActor);
     }
 
