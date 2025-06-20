@@ -57,8 +57,8 @@ public class TicketingController {
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
     public ResponseEntity<?> createTickets(@RequestBody TicketCreateRequest request) {
-
-            Customer customer = new Customer();
+            String customerInputId = SecurityUtils.getCurrentCustomerInputId();
+            Customer customer = customerService.getCustomerByInputId(customerInputId);
             customer.setCustomerId(request.getCustomerId());
             Schedule schedule = new Schedule();
             schedule.setScheduleId(request.getScheduleId());
