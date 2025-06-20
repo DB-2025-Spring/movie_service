@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Schema(description = "영화 정보를 담는 DTO")
@@ -34,6 +36,12 @@ public class MovieDto {
     @Schema(description = "러닝타임 (분)", example = "169")
     private final Integer runningTime;
 
+    @Schema(description = "제작사", example = "universal stdio")
+    private final String coo;
+
+    private final List<GenreDto> genres;
+    private final List<String> actors;
+
     public MovieDto(Movie movie) {
         this.movieId = movie.getMovieId();
         this.title = movie.getMovieName();
@@ -43,5 +51,15 @@ public class MovieDto {
         this.viewRating = movie.getViewRating();
         this.releaseDate = movie.getReleaseDate();
         this.runningTime = movie.getRunningTime();
+        this.coo = movie.getCoo();
+
+        this.genres = movie.getMovieGenres().stream()
+                .map(movieGenre -> new GenreDto(movieGenre.getGenre()))
+                .collect(Collectors.toList());
+
+        this.actors = movie.getMovieActors().stream()
+                .map(actor -> actor.getActor().getActorName())
+                .collect(Collectors.toList());
+
     }
 }

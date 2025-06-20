@@ -13,10 +13,7 @@ import com.dbs.movieservice.domain.ticketing.Coupon;
 import com.dbs.movieservice.dto.GenreDto;
 import com.dbs.movieservice.service.member.ClientLevelService;
 import com.dbs.movieservice.service.member.CustomerService;
-import com.dbs.movieservice.service.movie.ActorService;
-import com.dbs.movieservice.service.movie.GenreService;
-import com.dbs.movieservice.service.movie.MovieGenreService;
-import com.dbs.movieservice.service.movie.MovieService;
+import com.dbs.movieservice.service.movie.*;
 import com.dbs.movieservice.service.theater.ScheduleService;
 import com.dbs.movieservice.service.theater.SeatService;
 import com.dbs.movieservice.service.theater.TheaterService;
@@ -66,7 +63,7 @@ public class AdminController {
     private final IssueCouponService issueCouponService;
     private final CustomerService customerService;
     private final MovieGenreService movieGenreService;
-
+    private final MovieActorService movieActorService;
     // 영화 관리
     
     @GetMapping("/movies")
@@ -868,18 +865,39 @@ public class AdminController {
     @PostMapping("/movie-genre")
     @Operation(summary ="영화장르 생성기", description="영화id와 genreid를 받아 생성")
     public ResponseEntity<?> createMovieGenre(@RequestBody CreateMovieGenreRequest request) {
-        movieGenreService.createMovieGenre(request.getMovieId(), request.getGenreId());
+        for (Long genreId : request.getMovieGenres()) {
+            movieGenreService.createMovieGenre(request.getMovieId(), genreId);
+        }
         return ResponseEntity.ok().build();
     }
 
-        @Getter
+    @Getter
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
     public static class CreateMovieGenreRequest {
-        Long MovieId;
-        Long GenreId;
+        private Long movieId;
+        private List<Long> movieGenres;
     }
+
+    @PostMapping("/movie-actor")
+    @Operation(summary = "영화배우 생성기", description = "영화 ID와 배우 ID 리스트를 받아 영화에 배우들을 추가합니다.")
+    public ResponseEntity<?> createMovieActor(@RequestBody CreateMovieActorRequest request) {
+        for (Long actorId : request.getMovieActors()) {
+            movieActorService.createMovieActor(request.getMovieId(), actorId);
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CreateMovieActorRequest {
+        private Long movieId;
+        private List<Long> movieActors;
+    }
+
     // ========== TemporalAdmin 통합 DTO들 ==========
 
     /**
