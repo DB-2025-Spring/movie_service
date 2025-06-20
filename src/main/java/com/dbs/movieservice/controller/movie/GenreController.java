@@ -54,4 +54,5 @@ public class GenreController {
             @PathVariable Long genreId) {
         return ResponseEntity.ok(genreService.findMoviesByGenre(genreId));
     }
+    /* 특정 영화에 대한 장르 조회*/
 }
