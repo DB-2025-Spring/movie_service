@@ -1,6 +1,7 @@
 package com.dbs.movieservice.controller.thater;
 
 import com.dbs.movieservice.domain.ticketing.Payment;
+import com.dbs.movieservice.dto.ConfirmPaymentDTO;
 import com.dbs.movieservice.service.ticketing.PaymentService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,12 +33,21 @@ public class PaymentController {
     private String secretKey;
     private final ObjectMapper objectMapper;
     private final PaymentService paymentService;
+
+    @GetMapping("/test")
+    public ResponseEntity<?> test(){
+        ConfirmPaymentDTO dto=paymentService.confirmPayment(9L,"asdff",1,"asdf");
+        return ResponseEntity.ok("성공");
+    }
+
+
     @RequestMapping(value = "/success", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<String> confirmPayment(@RequestParam String paymentKey,
                                                  @RequestParam String orderId,
-                                                 @RequestParam Long amount) {
+                                                 @RequestParam Long amount,
+                                                 @RequestParam Long couponId) {
         String url = "https://api.tosspayments.com/v1/payments/confirm";
-
+        System.out.println("/success 호출됨!!!");
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         //헤더 구성
@@ -48,6 +58,8 @@ public class PaymentController {
         body.put("paymentKey", paymentKey);
         body.put("orderId", orderId);
         body.put("amount", amount);
+        Long usedCouponId = couponId;
+        System.out.println(usedCouponId);
         //toss 페이먼트로 post요청
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
         RestTemplate restTemplate = new RestTemplate();
@@ -56,16 +68,16 @@ public class PaymentController {
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
             TossApproveResponse approveResponse = objectMapper.readValue(response.getBody(), TossApproveResponse.class);
-//            log.info("orderId: {}, paymentKey: {}, amount: {}", approveResponse.getOrderId(), approveResponse.getPaymentKey(), approveResponse.getTotalAmount());
+            log.info("orderId: {}, paymentKey: {}, amount: {}", approveResponse.getOrderId(), approveResponse.getPaymentKey(), approveResponse.getTotalAmount());
             String brokenMethod = approveResponse.getMethod(); // 깨진 문자열
             String fixedMethod = new String(brokenMethod.getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
-//            log.info("paymentId: {} paymentKey: {}, paymentNo: {}, method: {}",approveResponse.getOrderId(),approveResponse.getPaymentKey(), approveResponse.getApproveNo(),fixedMethod );
+            log.info("paymentId: {} paymentKey: {}, paymentNo: {}, method: {}",approveResponse.getOrderId(),approveResponse.getPaymentKey(), approveResponse.getApproveNo(),fixedMethod );
 
             String approveNumber = approveResponse.approveNo;
             String numericPart = orderId.replaceAll("\\D+", ""); //숫자가 아니면 전부 공백처리. payment3 -> 3
             Long paymentId = Long.parseLong(numericPart);
-            Payment payment = paymentService.confirmPayment(paymentId,paymentKey,0,fixedMethod);
-            return ResponseEntity.ok("결제 승인 성공. paymentId: "+payment.getPaymentId()+"paymentStatus:"+payment.getPaymentStatus());
+            ConfirmPaymentDTO payment = paymentService.confirmPayment(paymentId,paymentKey,0,fixedMethod);
+            return ResponseEntity.ok("결제 승인 성공. paymentId: "+payment.getPaymentId());
         } catch (HttpClientErrorException e) {
             return ResponseEntity.status(e.getStatusCode()).body("승인 실패: " + e.getResponseBodyAsString());
         }catch (JsonProcessingException e) {

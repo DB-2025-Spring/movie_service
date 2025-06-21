@@ -130,7 +130,21 @@ public class CustomerService {
     public boolean checkDuplicateCustomerId(String customerInputId) {
         return customerRepository.existsByCustomerInputId(customerInputId);
     }
-    
+
+    public Customer findByCustomerId(Long customerId) {
+        return customerRepository.findById(customerId).orElse(null);
+    }
+
+    public Customer addCustomerPoint(Customer customer, int points) {
+        Customer findCustomer = findByCustomerId(customer.getCustomerId());
+        System.out.println("더하기 전");
+        System.out.println(findCustomer.getPoints());
+        customer.setPoints(customer.getPoints() + points);
+        System.out.println("더하기 후");
+        System.out.println(findCustomer.getPoints());
+        return customerRepository.save(customer);
+    }
+
     @Transactional
     public Customer upgradeGuestToMember(String customerInputId) {
         Customer customer = customerRepository.findByCustomerInputId(customerInputId)
