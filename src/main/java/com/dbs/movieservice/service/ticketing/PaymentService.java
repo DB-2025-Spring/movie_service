@@ -5,8 +5,11 @@ import com.dbs.movieservice.domain.member.Card;
 import com.dbs.movieservice.domain.member.Customer;
 import com.dbs.movieservice.domain.ticketing.Payment;
 import com.dbs.movieservice.domain.ticketing.Ticket;
+import com.dbs.movieservice.dto.ConfirmPaymentDTO;
 import com.dbs.movieservice.repository.ticketing.PaymentRepository;
 import com.dbs.movieservice.service.member.CardService;
+import com.dbs.movieservice.service.member.CustomerService;
+import com.dbs.movieservice.service.member.LevelUpService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,11 +25,14 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final TicketService ticketService;
     private final CardService cardService;
-
-    public PaymentService(TicketService ticketService, PaymentRepository paymentRepository, CardService cardService) {
+    private final LevelUpService levelUpService;
+    private final CustomerService customerService;
+    public PaymentService(TicketService ticketService, PaymentRepository paymentRepository, CardService cardService, LevelUpService levelUpService, CustomerService customerService) {
         this.ticketService = ticketService;
         this.paymentRepository = paymentRepository;
         this.cardService = cardService;
+        this.levelUpService = levelUpService;
+        this.customerService = customerService;
     }
 
     @Transactional
@@ -47,7 +53,7 @@ public class PaymentService {
     
     //todo 포인트 증감로직 + 등급업(countCustomerTicket(payment.getCustomer())이거 쓰면됨)
     @Transactional
-    public Payment confirmPayment(Long paymentId, String paymentKey, int approveNumber, String paymentMethod) {
+    public ConfirmPaymentDTO confirmPayment(Long paymentId, String paymentKey, int approveNumber, String paymentMethod) {
         // 1. Payment 조회
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new IllegalArgumentException("결제 내역이 존재하지 않습니다."));
@@ -68,7 +74,23 @@ public class PaymentService {
         List<Ticket> tickets = payment.getTickets(); // @OneToMany(mappedBy = "payment")
 
         ticketService.confirmPaymentForTicket(tickets, payment);
-        return payment;
+        System.out.println("1단계 모든 티켓");
+        List<Ticket> approveTickets = getAllTicketsByCustomerId(payment.getCustomer());
+        System.out.println("///////");
+        System.out.println("2단계 아이디");
+        System.out.println(payment.getCustomer().getCustomerId());
+        System.out.println(approveTickets.size());
+        Customer customer = customerService.findByCustomerId(payment.getCustomer().getCustomerId());
+        System.out.println(customer.getCustomerInputId());
+        System.out.println(customer.getLevel().getRewardRate());
+        System.out.println("///////");
+        customerService.addCustomerPoint(customer, (int) (payment.getPaymentAmount()*customer.getLevel().getRewardRate()));
+        levelUpService.processLevelUp(customer.getCustomerInputId(),approveTickets.size());
+
+        ConfirmPaymentDTO dto = new ConfirmPaymentDTO();
+        dto.setPaymentId(paymentId);
+        dto.setCustomerInputId(customer.getCustomerInputId());
+        return dto;
     }
 
     @Transactional

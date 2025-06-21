@@ -301,6 +301,12 @@ public class TicketingController {
         }
     }
 
+    @GetMapping("/test")
+    public ResponseEntity<?> tempFunction(){
+        System.out.println("호출됨");
+        return ResponseEntity.ok("test");
+    }
+
     /**
      * 티켓 생성용 DTO
      */

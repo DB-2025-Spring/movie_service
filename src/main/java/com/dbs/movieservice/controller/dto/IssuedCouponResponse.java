@@ -52,6 +52,9 @@ public class IssuedCouponResponse {
     
     @Schema(description = "쿠폰 사용 가능 여부", example = "true")
     private Boolean isUsable;
+
+    @Schema(description = "할인 금액", example = "2000")
+    private Integer discountAmount;
     
     /**
      * 쿠폰 사용 가능 여부 계산
@@ -85,6 +88,7 @@ public class IssuedCouponResponse {
                 .issuedAt(issueCoupon.getIssuedAt())
                 .isUsed(issueCoupon.getIsUsed())
                 .usedAt(issueCoupon.getUsedAt())
+                .discountAmount(issueCoupon.getCoupon().getDiscountAmount())
                 .build();
     }
 } 
