@@ -59,7 +59,6 @@ public class TicketingController {
     public ResponseEntity<?> createTickets(@RequestBody TicketCreateRequest request) {
             String customerInputId = SecurityUtils.getCurrentCustomerInputId();
             Customer customer = customerService.getCustomerByInputId(customerInputId);
-            customer.setCustomerId(request.getCustomerId());
             Schedule schedule = new Schedule();
             schedule.setScheduleId(request.getScheduleId());
             List<Seat> seats = request.getSeatIds().stream().map(seatId->{
@@ -310,7 +309,6 @@ public class TicketingController {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class TicketCreateRequest {
-        private Long customerId;
         private Long scheduleId;
         private List<Long> seatIds;
         private int adultNumber;
