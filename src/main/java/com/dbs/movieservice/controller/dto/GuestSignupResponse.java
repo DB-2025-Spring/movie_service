@@ -29,4 +29,13 @@ public class GuestSignupResponse {
     
     @Schema(description = "메시지", example = "비회원 등록이 완료되었습니다.")
     private String message;
+    
+    @Schema(description = "JWT 토큰", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+    private String token;
+    
+    @Schema(description = "토큰 타입", example = "Bearer")
+    private String type = "Bearer";
+    
+    @Schema(description = "사용자 권한", example = "GUEST")
+    private String authority;
 } 

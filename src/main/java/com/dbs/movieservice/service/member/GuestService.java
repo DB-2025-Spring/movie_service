@@ -45,6 +45,7 @@ public class GuestService {
                         .phone(customer.getPhone())
                         .joinDate(customer.getJoinDate())
                         .message("기존 비회원 정보로 진행합니다.")
+                        .type("Bearer")
                         .build();
             } else {
                 // 이미 정회원으로 가입된 전화번호인 경우
@@ -64,6 +65,7 @@ public class GuestService {
                 .phone(savedGuest.getPhone())
                 .joinDate(savedGuest.getJoinDate())
                 .message("비회원 등록이 완료되었습니다.")
+                .type("Bearer")
                 .build();
     }
 

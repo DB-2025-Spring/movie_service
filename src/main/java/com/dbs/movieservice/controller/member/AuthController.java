@@ -199,7 +199,7 @@ public class AuthController {
     @Operation(summary = "회원가입", description = "새로운 사용자를 등록합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "회원가입 성공",
-                content = @Content(schema = @Schema(implementation = String.class))),
+                content = @Content(schema = @Schema(implementation = AuthResponse.class))),
         @ApiResponse(responseCode = "409", description = "회원가입 실패 - 아이디 중복",
                 content = @Content(schema = @Schema(implementation = String.class))),
         @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터 - 필수 필드 누락 또는 형식 오류",
@@ -209,22 +209,35 @@ public class AuthController {
     })
     public ResponseEntity<?> registerCustomer(@Valid @RequestBody SignupRequest signupRequest) {
         // DTO를 서비스 계층에 전달하여 Customer 생성 및 저장 로직을 처리
-        customerService.registerCustomer(signupRequest);
+        Customer savedCustomer = customerService.registerCustomer(signupRequest);
         
-        // 회원가입 성공 후 신규가입쿠폰 발급
-        try {
-            boolean signupCouponIssued = signupCouponService.issueSignupCoupon(signupRequest.getCustomerInputId());
-            if (signupCouponIssued) {
-                log.info("Signup coupon issued for new user: {}", signupRequest.getCustomerInputId());
-            }
-        } catch (Exception e) {
-            log.warn("Failed to issue signup coupon for new user: {}", 
-                    signupRequest.getCustomerInputId(), e);
-            // 신규가입쿠폰 발급 실패는 회원가입 실패로 처리하지 않음
-        }
+        // 회원가입 성공 후 신규가입쿠폰 발급 (이제 서비스 계층에서 처리)
         
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body("User registered successfully!");
+        // 회원 인증 객체 생성
+        org.springframework.security.core.userdetails.User userDetails = new org.springframework.security.core.userdetails.User(
+            savedCustomer.getCustomerInputId(),
+            savedCustomer.getCustomerPw(),
+            Collections.singletonList(new SimpleGrantedAuthority(Role.ROLE_MEMBER.name()))
+        );
+        
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+            userDetails, null, userDetails.getAuthorities()
+        );
+        
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        
+        // JWT 토큰 생성
+        String jwt = jwtUtils.generateToken(authentication);
+        
+        // 응답 생성
+        AuthResponse authResponse = new AuthResponse(
+            jwt, 
+            savedCustomer.getCustomerInputId(), 
+            savedCustomer.getCustomerName(),
+            Role.ROLE_MEMBER.getCode()
+        );
+        
+        return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
     }
 
     // ==================== 비회원 관련 API ====================
@@ -241,6 +254,30 @@ public class AuthController {
     public ResponseEntity<GuestSignupResponse> registerGuest(
             @Valid @RequestBody GuestSignupRequest request) {
         GuestSignupResponse response = guestService.registerGuest(request);
+        
+        // 비회원 등록 성공 시 JWT 토큰 생성
+        Customer customer = customerService.getCustomerByInputId(response.getCustomerInputId());
+        
+        // 비회원 인증 객체 생성
+        org.springframework.security.core.userdetails.User guestUser = new org.springframework.security.core.userdetails.User(
+            customer.getCustomerInputId(),
+            customer.getCustomerPw(),
+            Collections.singletonList(new SimpleGrantedAuthority(Role.ROLE_GUEST.name()))
+        );
+        
+        Authentication guestAuth = new UsernamePasswordAuthenticationToken(
+            guestUser, null, guestUser.getAuthorities()
+        );
+        
+        SecurityContextHolder.getContext().setAuthentication(guestAuth);
+        
+        // JWT 토큰 생성
+        String jwt = jwtUtils.generateToken(guestAuth);
+        
+        // 토큰과 권한 정보 추가
+        response.setToken(jwt);
+        response.setAuthority(Role.ROLE_GUEST.getCode());
+        
         return ResponseEntity.ok(response);
     }
 
@@ -262,12 +299,30 @@ public class AuthController {
             Customer customer = customerOpt.get();
             log.info("비회원 로그인 성공: {}", customer.getCustomerInputId());
             
+            // 비회원 인증 객체 생성
+            org.springframework.security.core.userdetails.User guestUser = new org.springframework.security.core.userdetails.User(
+                customer.getCustomerInputId(),
+                customer.getCustomerPw(),
+                Collections.singletonList(new SimpleGrantedAuthority(Role.ROLE_GUEST.name()))
+            );
+            
+            Authentication guestAuth = new UsernamePasswordAuthenticationToken(
+                guestUser, null, guestUser.getAuthorities()
+            );
+            
+            SecurityContextHolder.getContext().setAuthentication(guestAuth);
+            
+            // JWT 토큰 생성
+            String jwt = jwtUtils.generateToken(guestAuth);
+            
             GuestSignupResponse response = GuestSignupResponse.builder()
                     .customerInputId(customer.getCustomerInputId())
                     .customerName(customer.getCustomerName())
                     .phone(customer.getPhone())
                     .joinDate(customer.getJoinDate())
                     .message("비회원 인증이 완료되었습니다.")
+                    .token(jwt)
+                    .authority(Role.ROLE_GUEST.getCode())
                     .build();
             
             return ResponseEntity.ok(response);
@@ -304,6 +359,52 @@ public class AuthController {
         } else {
             response.put("available", true);
             response.put("message", "Username is available");
+        }
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/check-guest-by-phone")
+    @Operation(summary = "전화번호로 비회원 계정 확인", 
+               description = "전화번호로 비회원 계정이 있는지 확인합니다. 정회원 가입 시 비회원 계정을 업그레이드할 수 있는지 확인하는 용도입니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "확인 완료",
+                content = @Content(schema = @Schema(implementation = String.class))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터",
+                content = @Content(schema = @Schema(implementation = String.class)))
+    })
+    public ResponseEntity<?> checkGuestByPhone(
+            @Parameter(description = "확인할 전화번호", example = "010-1234-5678", required = true) 
+            @RequestParam String phone) {
+        
+        if (phone == null || phone.trim().isEmpty()) {
+            throw new IllegalArgumentException("Phone number is required");
+        }
+        
+        // 전화번호로 고객 조회
+        Optional<Customer> customerOpt = customerService.findByPhone(phone);
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        if (customerOpt.isPresent()) {
+            Customer customer = customerOpt.get();
+            boolean isGuest = Role.ROLE_GUEST.getCode().equals(customer.getAuthority());
+            
+            response.put("exists", true);
+            response.put("isGuest", isGuest);
+            response.put("message", isGuest ? 
+                    "비회원 계정이 있습니다. 정회원으로 업그레이드할 수 있습니다." : 
+                    "이미 정회원으로 가입된 전화번호입니다.");
+            
+            if (isGuest) {
+                response.put("guestId", customer.getCustomerInputId());
+                response.put("name", customer.getCustomerName());
+                response.put("joinDate", customer.getJoinDate());
+            }
+        } else {
+            response.put("exists", false);
+            response.put("isGuest", false);
+            response.put("message", "등록된 계정이 없습니다.");
         }
         
         return ResponseEntity.ok(response);
