@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,12 +28,28 @@ public class CustomerService {
     private final PasswordEncoder passwordEncoder;
     private final ClientLevelRepository clientLevelRepository;
     private final LevelUpService levelUpService;
+    private final SignupCouponService signupCouponService;
 
     @Transactional
     public Customer registerCustomer(SignupRequest signupRequest) {
         // 아이디 중복 체크
         if (customerRepository.existsByCustomerInputId(signupRequest.getCustomerInputId())) {
             throw new RuntimeException("Username is already taken!");
+        }
+        
+        // 전화번호로 기존 비회원 계정 확인
+        Optional<Customer> existingGuestOpt = customerRepository.findByPhone(signupRequest.getPhone());
+        
+        if (existingGuestOpt.isPresent()) {
+            Customer existingGuest = existingGuestOpt.get();
+            // 비회원인 경우 정회원으로 업그레이드
+            if (Role.ROLE_GUEST.getCode().equals(existingGuest.getAuthority())) {
+                log.info("비회원 계정을 정회원으로 업그레이드합니다: {}", existingGuest.getCustomerInputId());
+                return upgradeGuestToFullMember(existingGuest, signupRequest);
+            } else {
+                // 이미 정회원이거나 관리자인 경우
+                throw new RuntimeException("이미 가입된 전화번호입니다: " + signupRequest.getPhone());
+            }
         }
         
         // 컨트롤러에서 엔티티 생성 로직을 서비스 계층으로 이동
@@ -49,7 +66,65 @@ public class CustomerService {
         customer.setPoints(0);
         customer.setLevel(clientLevelRepository.findDefaultLevel());
         
-        return customerRepository.save(customer);
+        // 저장
+        Customer savedCustomer = customerRepository.save(customer);
+        
+        // 신규가입 쿠폰 발급
+        try {
+            boolean signupCouponIssued = signupCouponService.issueSignupCoupon(signupRequest.getCustomerInputId());
+            if (signupCouponIssued) {
+                log.info("신규 회원에게 신규가입 쿠폰 발급 완료: {}", signupRequest.getCustomerInputId());
+            }
+        } catch (Exception e) {
+            log.warn("신규 회원에게 신규가입 쿠폰 발급 실패: {}", signupRequest.getCustomerInputId(), e);
+            // 쿠폰 발급 실패는 회원가입 실패로 처리하지 않음
+        }
+        
+        return savedCustomer;
+    }
+    
+    /**
+     * 비회원 계정을 정회원으로 업그레이드
+     * 기존 비회원 계정의 데이터를 유지하면서 정회원 정보로 업데이트
+     */
+    @Transactional
+    public Customer upgradeGuestToFullMember(Customer guestCustomer, SignupRequest signupRequest) {
+        // 비회원 계정 정보 업데이트
+        guestCustomer.setCustomerInputId(signupRequest.getCustomerInputId());
+        guestCustomer.setCustomerPw(passwordEncoder.encode(signupRequest.getCustomerPw()));
+        // 이름, 생일, 전화번호는 이미 있으므로 변경하지 않거나 필요시 업데이트
+        if (!guestCustomer.getCustomerName().equals(signupRequest.getCustomerName())) {
+            guestCustomer.setCustomerName(signupRequest.getCustomerName());
+        }
+        if (!guestCustomer.getBirthDate().equals(signupRequest.getBirthDate())) {
+            guestCustomer.setBirthDate(signupRequest.getBirthDate());
+        }
+        
+        // 권한을 MEMBER로 업그레이드
+        guestCustomer.setAuthority(Role.ROLE_MEMBER.getCode());
+        
+        // 가입일은 변경하지 않음 (비회원으로 가입한 날짜 유지)
+
+        guestCustomer.setPoints(0);
+        
+        // 저장
+        Customer savedCustomer = customerRepository.save(guestCustomer);
+        
+        log.info("비회원({})이 정회원({})으로 업그레이드되었습니다.", 
+                guestCustomer.getCustomerId(), signupRequest.getCustomerInputId());
+        
+        // 신규가입 쿠폰 발급
+        try {
+            boolean signupCouponIssued = signupCouponService.issueSignupCoupon(signupRequest.getCustomerInputId());
+            if (signupCouponIssued) {
+                log.info("업그레이드된 회원에게 신규가입 쿠폰 발급 완료: {}", signupRequest.getCustomerInputId());
+            }
+        } catch (Exception e) {
+            log.warn("업그레이드된 회원에게 신규가입 쿠폰 발급 실패: {}", signupRequest.getCustomerInputId(), e);
+            // 쿠폰 발급 실패는 회원 업그레이드 실패로 처리하지 않음
+        }
+        
+        return savedCustomer;
     }
     
     public boolean checkDuplicateCustomerId(String customerInputId) {
@@ -80,6 +155,16 @@ public class CustomerService {
     public Customer getCustomerByInputId(String customerInputId) {
         return customerRepository.findByCustomerInputId(customerInputId)
                 .orElseThrow(() -> new RuntimeException("Customer not found with ID: " + customerInputId));
+    }
+
+    /**
+     * 전화번호로 고객 조회
+     * @param phone 전화번호
+     * @return 고객 정보 (Optional)
+     */
+    @Transactional(readOnly = true)
+    public Optional<Customer> findByPhone(String phone) {
+        return customerRepository.findByPhone(phone);
     }
 
     @Transactional(readOnly = true)
