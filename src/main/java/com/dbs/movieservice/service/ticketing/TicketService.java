@@ -174,7 +174,7 @@ public class TicketService {
     }
 
     /**
-     * 특정 고객이 특정 영화를 관람했는지 확인 (결제완료 + 상영일지남)
+     * 특정 고객이 특정 영화를 관람했는지 확인 (결제완료)
      * @param customerId 고객 ID
      * @param movieId 영화 ID
      * @return 관람 여부
@@ -186,8 +186,7 @@ public class TicketService {
         return tickets.stream()
                 .filter(ticket -> ticket.getPayment() != null) // 결제가 있는 티켓만
                 .filter(ticket -> "Approve".equals(ticket.getPayment().getPaymentStatus())) // 결제 완료
-                .filter(ticket -> ticket.getSchedule().getMovie().getMovieId().equals(movieId)) // 해당 영화
-                .anyMatch(ticket -> ticket.getSchedule().getScheduleDate().isBefore(LocalDate.now())); // 상영일이 지남
+                .anyMatch(ticket -> ticket.getSchedule().getMovie().getMovieId().equals(movieId)); // 해당 영화
     }
 
 
