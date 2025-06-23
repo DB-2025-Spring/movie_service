@@ -22,6 +22,7 @@ import com.dbs.movieservice.service.theater.TheaterService;
 import com.dbs.movieservice.service.ticketing.CouponService;
 import com.dbs.movieservice.service.member.IssueCouponService;
 import com.dbs.movieservice.controller.dto.IssuedCouponResponse;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -43,6 +44,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -533,19 +535,17 @@ public class AdminController {
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<ScheduleResponse> createSchedule(@Valid @RequestBody CreateScheduleRequest request) {
-        // saveSchedule 메서드 사용 (scheduleDate와 scheduleSequence를 자동 계산)
-        LocalDate scheduleDate = request.getScheduleStartTime().toLocalDate();
-        Integer scheduleSequence = 1; // 기본값으로 1 설정 (실제로는 saveSchedule에서 계산됨)
-        
-        Schedule schedule = scheduleService.saveSchedule(request.getMovieId(), request.getTheaterId(), 
-                scheduleDate, scheduleSequence, request.getScheduleStartTime());
-        
-        // 연관 엔티티 정보를 명시적으로 로딩하여 DTO로 변환
-        schedule.getMovie().getMovieName(); // lazy loading 초기화
-        schedule.getTheater().getTheaterName(); // lazy loading 초기화
-        
-        return ResponseEntity.ok(ScheduleResponse.from(schedule));
+
+    public ResponseEntity<Schedule> createSchedule(@Valid @RequestBody CreateScheduleRequest request) {
+        Schedule schedule = scheduleService.createSchedule(
+                request.getTheaterId(),
+                request.getMovieId(),
+                request.getScheduleDate(),
+                request.getScheduleStartTime(),
+                request.getScheduleEndTime()
+        );
+        return ResponseEntity.ok(schedule);
+
     }
 
     @PostMapping("/schedules/advanced")
@@ -585,8 +585,14 @@ public class AdminController {
             @Valid @RequestBody ScheduleRequest request) {
         // scheduleEndTime이 없으면 null로 전달 (updateSchedule에서 자동 계산됨)
         Schedule updatedSchedule = scheduleService.updateSchedule(
-            scheduleId, request.getMovieId(), request.getTheaterId(),
-            request.getScheduleStartTime(), request.getScheduleEndTime()
+
+                scheduleId,
+                request.getMovieId(),
+                request.getTheaterId(),
+                request.getScheduleDate(),
+                request.getScheduleStartTime(),
+                request.getScheduleEndTime()
+
         );
         
         // 연관 엔티티 정보를 명시적으로 로딩하여 DTO로 변환
@@ -1019,9 +1025,23 @@ public class AdminController {
         @NotNull(message = "영화 ID는 필수입니다.")
         private Long movieId;
 
+        @NotNull(message = "영화 날짜는 필수입니다.")
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private LocalDate scheduleDate;
+
         @NotNull(message = "시작 시간은 필수입니다.")
         @Future(message = "시작 시간은 현재보다 이후여야 합니다.")
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm")
         private LocalDateTime scheduleStartTime;
+
+
+        @Future(message = "마감 시간은 현재보다 이후여야 합니다.")
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm")
+        private LocalDateTime scheduleEndTime;
+
+
+
+
     }
 
     /**

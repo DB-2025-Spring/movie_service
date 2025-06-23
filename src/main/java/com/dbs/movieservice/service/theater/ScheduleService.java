@@ -11,16 +11,14 @@ import com.dbs.movieservice.repository.theater.SeatAvailableRepository;
 import com.dbs.movieservice.repository.theater.TheaterRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,48 +41,43 @@ public class ScheduleService {
 
     //이 메소드는 아직, 다음날에 있는 상영일정은 고려 안함. 추후 수정하겠습니다.
     @Transactional
-    public Schedule createSchedule(Long theaterId, Long movieId, LocalDateTime startTime, @Future(message = "마감 시간은 현재보다 이후여야 합니다.") LocalDateTime scheduleEndTime) {
-        LocalDate date = startTime.toLocalDate();
-
+    public Schedule createSchedule(Long theaterId, Long movieId, @NotNull(message = "영화 날짜는 필수입니다.") LocalDate scheduleDate, LocalDateTime startTime, @Future(message = "마감 시간은 현재보다 이후여야 합니다.") LocalDateTime scheduleEndTime) {
         Theater theater = theaterRepository.findById(theaterId)
                 .orElseThrow(() -> new EntityNotFoundException("상영관이 존재하지 않습니다."));
+
         Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> new EntityNotFoundException("영화가 존재하지 않습니다."));
 
         LocalDateTime endTime = startTime.plusMinutes(movie.getRunningTime());
 
-        List<Schedule> schedulesOnSameDate = scheduleRepository.findByScheduleDateAndTheater_TheaterId(date, theaterId);
-        boolean overlaps = schedulesOnSameDate.stream().anyMatch(otherSchedule -> {
-            LocalDateTime otherScheduleStartTime = otherSchedule.getScheduleStartTime();
-            LocalDateTime otherScheduleEndTime = otherSchedule.getScheduleEndTime();
+        // ✅ 상영관의 전체 스케줄 조회 (날짜 무관)
+        List<Schedule> schedulesInTheater = scheduleRepository.findByTheater_TheaterId(theaterId);
 
-            return !(endTime.isBefore(otherScheduleStartTime) || startTime.isAfter(otherScheduleEndTime));
+        // ✅ 시간 겹침 검사
+        boolean overlaps = schedulesInTheater.stream().anyMatch(other -> {
+            LocalDateTime otherStart = other.getScheduleStartTime();
+            LocalDateTime otherEnd = other.getScheduleEndTime();
+            return !(endTime.isBefore(otherStart) || startTime.isAfter(otherEnd));
         });
 
         if (overlaps) {
-            throw new IllegalStateException("해당 시간에 상영 중인 영화가 이미 존재합니다.");
+            throw new IllegalStateException("해당 시간에 이미 상영 중인 영화가 존재합니다.");
         }
-        //추가하려는 영화의 순서를 찾음.
-        long sequence = schedulesOnSameDate.stream()
-                .filter(s -> s.getScheduleStartTime().isBefore(startTime))
-                .count() + 1;
-        //추가하려는 영화보다 늦게 시작하는 영화의 순서를 뒤로 미룸.
-        schedulesOnSameDate.stream()
-                .filter(s -> s.getScheduleStartTime().isAfter(startTime))
-                .forEach(s -> s.setScheduleSequence(s.getScheduleSequence() + 1));
 
         Schedule schedule = new Schedule();
         schedule.setTheater(theater);
         schedule.setMovie(movie);
-        schedule.setScheduleDate(date);
+        schedule.setScheduleDate(scheduleDate);
         schedule.setScheduleStartTime(startTime);
         schedule.setScheduleEndTime(endTime);
-        schedule.setScheduleSequence((int) sequence);
 
-        Schedule cSchedule = scheduleRepository.save(schedule);
-        seatAvailableService.createSeatAvailableForSchedule(cSchedule);
-        return cSchedule;
+        schedule.setScheduleSequence(1);
+
+        Schedule savedSchedule = scheduleRepository.save(schedule);
+        seatAvailableService.createSeatAvailableForSchedule(savedSchedule);
+        return savedSchedule;
     }
+
 
     //cgv를 보니, 해당날자 기준, 방영한 영화를 포함해서 다 조회하기에, 금일 기준으로 조회하게 정의했습니다.
     public List<Schedule> getSchedulesForNext7Days(Long movieId) {
@@ -199,8 +192,13 @@ public class ScheduleService {
      * 상영일정 수정
      */
     @Transactional
-    public Schedule updateSchedule(Long scheduleId, Long movieId, Long theaterId,
-                                   LocalDateTime scheduleStartTime, @Future(message = "마감 시간은 현재보다 이후여야 합니다.") LocalDateTime scheduleEndTime) {
+    public Schedule updateSchedule(Long scheduleId,
+                                   Long movieId,
+                                   Long theaterId,
+                                   LocalDate scheduleDate,
+                                   LocalDateTime scheduleStartTime,
+                                   @Future(message = "마감 시간은 현재보다 이후여야 합니다.")
+                                       LocalDateTime scheduleEndTime) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new RuntimeException("상영일정을 찾을 수 없습니다: " + scheduleId));
         
@@ -209,9 +207,13 @@ public class ScheduleService {
         
         Theater theater = theaterRepository.findById(theaterId)
                 .orElseThrow(() -> new RuntimeException("상영관을 찾을 수 없습니다: " + theaterId));
-        
+        int hour = scheduleStartTime.getHour();
+        if (hour < 6 || hour >= 24) {
+            throw new IllegalArgumentException("상영 시작 시간은 06:00부터 24:00 미만까지만 가능합니다.");
+        }
         schedule.setMovie(movie);
         schedule.setTheater(theater);
+        schedule.setScheduleDate(scheduleDate);
         schedule.setScheduleStartTime(scheduleStartTime);
         // endTime 계산
         LocalDateTime endTime = scheduleStartTime.plusMinutes(movie.getRunningTime());

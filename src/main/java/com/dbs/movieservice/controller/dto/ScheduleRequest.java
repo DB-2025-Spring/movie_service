@@ -28,7 +28,7 @@ public class ScheduleRequest {
     private Long theaterId;
 
 
-    @Schema(hidden = true)
+    @Schema(description = "상영일", example = "2024-04-26", required = true)
     private LocalDate scheduleDate;
 
 

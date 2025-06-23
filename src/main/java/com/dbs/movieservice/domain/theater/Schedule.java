@@ -30,7 +30,7 @@ public class Schedule {
     @Column(name = "schedule_date", nullable = false)
     private LocalDate scheduleDate;
 
-    @Column(name = "schedule_sequence", nullable = false)
+    @Column(name = "schedule_sequence", nullable = true)
     private Integer scheduleSequence;
 
     @Column(name = "schedule_start_time", nullable = false)
