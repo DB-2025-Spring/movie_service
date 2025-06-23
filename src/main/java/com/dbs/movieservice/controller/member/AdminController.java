@@ -10,7 +10,9 @@ import com.dbs.movieservice.domain.theater.Schedule;
 import com.dbs.movieservice.domain.theater.Seat;
 import com.dbs.movieservice.domain.theater.Theater;
 import com.dbs.movieservice.domain.ticketing.Coupon;
+import com.dbs.movieservice.dto.ActorDto;
 import com.dbs.movieservice.dto.GenreDto;
+import com.dbs.movieservice.dto.MovieDto;
 import com.dbs.movieservice.service.member.ClientLevelService;
 import com.dbs.movieservice.service.member.CustomerService;
 import com.dbs.movieservice.service.movie.*;
@@ -65,19 +67,15 @@ public class AdminController {
     private final MovieGenreService movieGenreService;
     private final MovieActorService movieActorService;
     // 영화 관리
-    
+
     @GetMapping("/movies")
     @Operation(summary = "모든 영화 조회", description = "시스템에 등록된 모든 영화 목록을 조회합니다.")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "조회 성공",
-                content = @Content(schema = @Schema(implementation = Movie.class))),
-        @ApiResponse(responseCode = "403", description = "권한 없음"),
-        @ApiResponse(responseCode = "401", description = "인증 실패")
-    })
-    public ResponseEntity<List<Movie>> getAllMovies() {
+    public ResponseEntity<List<MovieDto>> getAllMovies() {
         List<Movie> movies = movieService.findAllMovies();
-        return ResponseEntity.ok(movies);
+        List<MovieDto> dtos = movies.stream().map(MovieDto::new).toList();
+        return ResponseEntity.ok(dtos);
     }
+
 
     @PostMapping("/movies")
     @Operation(summary = "영화 생성", description = "새로운 영화를 시스템에 등록합니다.")
@@ -151,9 +149,11 @@ public class AdminController {
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<List<Actor>> getAllActors() {
-        List<Actor> actors = actorService.findAllActors();
-        return ResponseEntity.ok(actors);
+    public ResponseEntity<List<ActorDto>> getAllActors() {
+        List<ActorDto> actorDtos = actorService.findAllActors().stream()
+                .map(ActorDto::new)
+                .toList();
+        return ResponseEntity.ok(actorDtos);
     }
 
     @PostMapping("/actors")
