@@ -94,14 +94,14 @@ public class PaymentController {
     public ResponseEntity<String> cancelPayment(@RequestParam Long paymentId) {
         Payment payment;
         try {
-            // 1. 현재 로그인한 사용자 조회
+            // 1. 현재 로그인한 사용자 조회 (회원 및 비회원 모두 지원)
             String currentCustomerInputId = SecurityUtils.getCurrentCustomerInputId();
             Customer currentCustomer = customerService.getCustomerByInputId(currentCustomerInputId);
             
             // 2. paymentId로 결제 정보 조회 (결제 상태 등 확인)
             payment = paymentService.getPayment(paymentId);
             
-            // 3. 권한 확인 - 결제한 고객과 현재 로그인한 고객이 같은지 확인
+            // 3. 권한 확인 - 결제한 고객과 현재 로그인한 고객이 같은지 확인 (회원/비회원 구분 없이)
             if (!payment.getCustomer().getCustomerId().equals(currentCustomer.getCustomerId())) {
                 return ResponseEntity.status(403).body("해당 결제를 취소할 권한이 없습니다.");
             }
