@@ -38,4 +38,6 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     );
     @Query("SELECT DISTINCT s FROM Schedule s Left Join fetch s.movie m WHERE s.scheduleDate = :scheduleDate")
     List<Schedule> findSchedulesByDate(@Param("scheduleDate") LocalDate scheduleDate);
+
+    List<Schedule> findByTheater_TheaterId(Long theaterId);
 }

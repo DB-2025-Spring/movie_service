@@ -22,6 +22,7 @@ import com.dbs.movieservice.service.theater.TheaterService;
 import com.dbs.movieservice.service.ticketing.CouponService;
 import com.dbs.movieservice.service.member.IssueCouponService;
 import com.dbs.movieservice.controller.dto.IssuedCouponResponse;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -43,6 +44,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -534,8 +536,13 @@ public class AdminController {
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
     public ResponseEntity<Schedule> createSchedule(@Valid @RequestBody CreateScheduleRequest request) {
-        Schedule schedule = scheduleService.createSchedule(request.getTheaterId(), request.getMovieId(),
-                request.getScheduleStartTime(), request.getScheduleEndTime());
+        Schedule schedule = scheduleService.createSchedule(
+                request.getTheaterId(),
+                request.getMovieId(),
+                request.getScheduleDate(),
+                request.getScheduleStartTime(),
+                request.getScheduleEndTime()
+        );
         return ResponseEntity.ok(schedule);
     }
 
@@ -575,6 +582,7 @@ public class AdminController {
                 scheduleId,
                 request.getMovieId(),
                 request.getTheaterId(),
+                request.getScheduleDate(),
                 request.getScheduleStartTime(),
                 request.getScheduleEndTime()
         );
@@ -1007,12 +1015,19 @@ public class AdminController {
         @NotNull(message = "영화 ID는 필수입니다.")
         private Long movieId;
 
+        @NotNull(message = "영화 날짜는 필수입니다.")
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+        private LocalDate scheduleDate;
+
         @NotNull(message = "시작 시간은 필수입니다.")
         @Future(message = "시작 시간은 현재보다 이후여야 합니다.")
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm")
         private LocalDateTime scheduleStartTime;
 
         @Future(message = "마감 시간은 현재보다 이후여야 합니다.")
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm")
         private LocalDateTime scheduleEndTime;
+
 
 
     }
