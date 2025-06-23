@@ -7,7 +7,6 @@ import com.dbs.movieservice.dto.ActorDto;
 import com.dbs.movieservice.dto.MovieDto;
 import com.dbs.movieservice.repository.movie.ActorRepository;
 import com.dbs.movieservice.repository.movie.MovieActorRepository;
-import com.dbs.movieservice.repository.movie.MovieRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,7 +39,7 @@ public class ActorService {
         List<MovieActor> links = movieActorRepository.findByActor_ActorId(actorId);
         return links.stream()
                 .map(MovieActor::getMovie)
-                .map(MovieDto::new)
+                .map((Movie movie) -> new MovieDto(movie))
                 .toList();
     }
 

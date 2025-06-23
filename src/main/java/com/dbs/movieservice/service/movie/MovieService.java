@@ -2,12 +2,10 @@ package com.dbs.movieservice.service.movie;
 
 import com.dbs.movieservice.domain.member.Customer;
 import com.dbs.movieservice.domain.movie.Movie;
-import com.dbs.movieservice.domain.ticketing.Payment;
 import com.dbs.movieservice.domain.ticketing.Ticket;
 import com.dbs.movieservice.dto.MovieDto;
 import com.dbs.movieservice.repository.movie.MovieRepository;
 import com.dbs.movieservice.service.ticketing.PaymentService;
-import com.dbs.movieservice.service.ticketing.TicketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,25 +39,25 @@ public class MovieService {
     //제목으로 조회
     public List<MovieDto> searchMoviesByKeyword(String keyword) {
         return movieRepository.searchMoviesByKeyword(keyword)
-                .stream().map(MovieDto::new).toList();
+                .stream().map((Movie movie) -> new MovieDto(movie)).toList();
     }
 
     //최신순으로 정렬?
     public List<MovieDto> getRecentMovies() {
         return movieRepository.findAllByOrderByReleaseDateDesc()
-                .stream().map(MovieDto::new).toList();
+                .stream().map((Movie movie) -> new MovieDto(movie)).toList();
     }
 
     //현재 상영작
     public List<MovieDto> getNowShowingMovies() {
         return movieRepository.findNowShowingMovies()
-                .stream().map(MovieDto::new).toList();
+                .stream().map((Movie movie) -> new MovieDto(movie)).toList();
     }
 
     //상영예고작
     public List<MovieDto> getUpcomingMovies() {
         return movieRepository.findUpcomingMovies()
-                .stream().map(MovieDto::new).toList();
+                .stream().map((Movie movie) -> new MovieDto(movie)).toList();
     }
 
     /**
