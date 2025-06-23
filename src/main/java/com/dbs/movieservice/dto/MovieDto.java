@@ -54,10 +54,12 @@ public class MovieDto {
         this.coo = movie.getCoo();
 
         this.genres = movie.getMovieGenres().stream()
+                .filter(movieGenre -> movieGenre.getGenre() != null)
                 .map(movieGenre -> new GenreDto(movieGenre.getGenre()))
                 .collect(Collectors.toList());
 
         this.actors = movie.getMovieActors().stream()
+                .filter(actor -> actor.getActor() != null)
                 .map(actor -> actor.getActor().getActorName())
                 .collect(Collectors.toList());
 
