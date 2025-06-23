@@ -7,8 +7,10 @@ import com.dbs.movieservice.domain.theater.Seat;
 import com.dbs.movieservice.domain.theater.Theater;
 import com.dbs.movieservice.repository.movie.MovieRepository;
 import com.dbs.movieservice.repository.theater.ScheduleRepository;
+import com.dbs.movieservice.repository.theater.SeatAvailableRepository;
 import com.dbs.movieservice.repository.theater.TheaterRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.Future;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -28,18 +30,20 @@ public class ScheduleService {
     private final MovieRepository movieRepository;
     private final SeatAvailableService seatAvailableService;
     private final SeatService seatService;
+    private final SeatAvailableRepository seatAvailableRepository;
 
-    public ScheduleService(ScheduleRepository scheduleRepository, TheaterRepository theaterRepository, MovieRepository movieRepository, SeatAvailableService seatAvailableService, SeatService seatService) {
+    public ScheduleService(ScheduleRepository scheduleRepository, TheaterRepository theaterRepository, MovieRepository movieRepository, SeatAvailableService seatAvailableService, SeatService seatService, SeatAvailableRepository seatAvailableRepository) {
         this.scheduleRepository = scheduleRepository;
         this.theaterRepository = theaterRepository;
         this.movieRepository = movieRepository;
         this.seatAvailableService = seatAvailableService;
         this.seatService = seatService;
+        this.seatAvailableRepository = seatAvailableRepository;
     }
 
     //이 메소드는 아직, 다음날에 있는 상영일정은 고려 안함. 추후 수정하겠습니다.
     @Transactional
-    public Schedule createSchedule(Long theaterId, Long movieId, LocalDateTime startTime) {
+    public Schedule createSchedule(Long theaterId, Long movieId, LocalDateTime startTime, @Future(message = "마감 시간은 현재보다 이후여야 합니다.") LocalDateTime scheduleEndTime) {
         LocalDate date = startTime.toLocalDate();
 
         Theater theater = theaterRepository.findById(theaterId)
@@ -195,9 +199,8 @@ public class ScheduleService {
      * 상영일정 수정
      */
     @Transactional
-    public Schedule updateSchedule(Long scheduleId, Long movieId, Long theaterId, 
-                                 LocalDate scheduleDate, Integer scheduleSequence, 
-                                 LocalDateTime scheduleStartTime) {
+    public Schedule updateSchedule(Long scheduleId, Long movieId, Long theaterId,
+                                   LocalDateTime scheduleStartTime, @Future(message = "마감 시간은 현재보다 이후여야 합니다.") LocalDateTime scheduleEndTime) {
         Schedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new RuntimeException("상영일정을 찾을 수 없습니다: " + scheduleId));
         
@@ -209,8 +212,6 @@ public class ScheduleService {
         
         schedule.setMovie(movie);
         schedule.setTheater(theater);
-        schedule.setScheduleDate(scheduleDate);
-        schedule.setScheduleSequence(scheduleSequence);
         schedule.setScheduleStartTime(scheduleStartTime);
         // endTime 계산
         LocalDateTime endTime = scheduleStartTime.plusMinutes(movie.getRunningTime());
@@ -227,6 +228,7 @@ public class ScheduleService {
         if (!scheduleRepository.existsById(scheduleId)) {
             throw new RuntimeException("상영일정을 찾을 수 없습니다: " + scheduleId);
         }
+        seatAvailableRepository.deleteAllBySchedule(scheduleId);
         scheduleRepository.deleteById(scheduleId);
     }
 

@@ -33,6 +33,9 @@ public class MovieDto {
     @Schema(description = "개봉일", example = "2023-11-01")
     private final LocalDate releaseDate;
 
+    @Schema(description = "종영일", example = "2024-11-01")
+    private final LocalDate endDate;
+
     @Schema(description = "러닝타임 (분)", example = "169")
     private final Integer runningTime;
 
@@ -50,6 +53,7 @@ public class MovieDto {
         this.description = movie.getMovieDesc();
         this.viewRating = movie.getViewRating();
         this.releaseDate = movie.getReleaseDate();
+        this.endDate = movie.getEndDate();
         this.runningTime = movie.getRunningTime();
         this.coo = movie.getCoo();
 
@@ -62,6 +66,7 @@ public class MovieDto {
                 .filter(ma -> ma.getActor() != null)
                 .map(ma -> new ActorDto(ma.getActor()))
                 .collect(Collectors.toList());
+
 
     }
 }

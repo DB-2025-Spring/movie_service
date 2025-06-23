@@ -72,7 +72,7 @@ public class AdminController {
     @Operation(summary = "모든 영화 조회", description = "시스템에 등록된 모든 영화 목록을 조회합니다.")
     public ResponseEntity<List<MovieDto>> getAllMovies() {
         List<Movie> movies = movieService.findAllMovies();
-        List<MovieDto> dtos = movies.stream().map(MovieDto::new).toList();
+        List<MovieDto> dtos = movies.stream().map((Movie movie) -> new MovieDto(movie)).toList();
         return ResponseEntity.ok(dtos);
     }
 
@@ -535,7 +535,7 @@ public class AdminController {
     })
     public ResponseEntity<Schedule> createSchedule(@Valid @RequestBody CreateScheduleRequest request) {
         Schedule schedule = scheduleService.createSchedule(request.getTheaterId(), request.getMovieId(),
-                request.getScheduleStartTime());
+                request.getScheduleStartTime(), request.getScheduleEndTime());
         return ResponseEntity.ok(schedule);
     }
 
@@ -559,22 +559,30 @@ public class AdminController {
     @PutMapping("/schedules/{scheduleId}")
     @Operation(summary = "상영일정 수정", description = "기존 상영일정 정보를 수정합니다.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "수정 성공",
-                content = @Content(schema = @Schema(implementation = Schedule.class))),
-        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
-        @ApiResponse(responseCode = "404", description = "상영일정을 찾을 수 없음"),
-        @ApiResponse(responseCode = "403", description = "권한 없음"),
-        @ApiResponse(responseCode = "401", description = "인증 실패")
+            @ApiResponse(responseCode = "200", description = "수정 성공",
+                    content = @Content(schema = @Schema(implementation = ScheduleResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+            @ApiResponse(responseCode = "404", description = "상영일정을 찾을 수 없음"),
+            @ApiResponse(responseCode = "403", description = "권한 없음"),
+            @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<Schedule> updateSchedule(
-            @Parameter(description = "상영일정 ID", example = "1", required = true) @PathVariable Long scheduleId,
+    public ResponseEntity<ScheduleResponseDto> updateSchedule(
+            @Parameter(description = "상영일정 ID", example = "1", required = true)
+            @PathVariable Long scheduleId,
             @Valid @RequestBody ScheduleRequest request) {
+
         Schedule updatedSchedule = scheduleService.updateSchedule(
-            scheduleId, request.getMovieId(), request.getTheaterId(),
-            request.getScheduleDate(), request.getScheduleSequence(), request.getScheduleStartTime()
+                scheduleId,
+                request.getMovieId(),
+                request.getTheaterId(),
+                request.getScheduleStartTime(),
+                request.getScheduleEndTime()
         );
-        return ResponseEntity.ok(updatedSchedule);
+
+        ScheduleResponseDto responseDto = ScheduleResponseDto.from(updatedSchedule);
+        return ResponseEntity.ok(responseDto);
     }
+
 
     @DeleteMapping("/schedules/{scheduleId}")
     @Operation(summary = "상영일정 삭제", description = "상영일정을 시스템에서 삭제합니다.")
@@ -586,6 +594,7 @@ public class AdminController {
     })
     public ResponseEntity<Void> deleteSchedule(
             @Parameter(description = "상영일정 ID", example = "1", required = true) @PathVariable Long scheduleId) {
+
         scheduleService.deleteSchedule(scheduleId);
         return ResponseEntity.noContent().build();
     }
@@ -1001,6 +1010,11 @@ public class AdminController {
         @NotNull(message = "시작 시간은 필수입니다.")
         @Future(message = "시작 시간은 현재보다 이후여야 합니다.")
         private LocalDateTime scheduleStartTime;
+
+        @Future(message = "마감 시간은 현재보다 이후여야 합니다.")
+        private LocalDateTime scheduleEndTime;
+
+
     }
 
     /**

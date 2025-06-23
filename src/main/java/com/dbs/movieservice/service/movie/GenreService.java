@@ -2,7 +2,6 @@ package com.dbs.movieservice.service.movie;
 
 import com.dbs.movieservice.domain.movie.Genre;
 import com.dbs.movieservice.domain.movie.Movie;
-import com.dbs.movieservice.domain.movie.MovieGenre;
 import com.dbs.movieservice.dto.GenreDto;
 import com.dbs.movieservice.dto.MovieDto;
 import com.dbs.movieservice.repository.movie.GenreRepository;
@@ -30,7 +29,7 @@ public class GenreService {
     public List<MovieDto> findMoviesByGenre(Long genreId) {
         List<Movie> movies = movieGenreRepository.findMoviesByGenreId(genreId);
         return movies.stream()
-                .map(MovieDto::new)
+                .map((Movie movie) -> new MovieDto(movie))
                 .toList();
     }
 

@@ -5,6 +5,7 @@ import jakarta.persistence.LockModeType;
 import jakarta.persistence.QueryHint;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -52,4 +53,13 @@ public interface SeatAvailableRepository extends JpaRepository<SeatAvailable, Se
             @Param("scheduleId") Long scheduleId,
             @Param("seatsId") List<Long> seatsId
     );
+    /**
+     * 특정 스케줄에 연결된 SeatAvailable 모두 삭제
+     */
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM SeatAvailable sa WHERE sa.id.scheduleId = :scheduleId")
+    void deleteAllBySchedule(@Param("scheduleId") Long scheduleId);
+
+
 }
