@@ -31,4 +31,7 @@ public class Coupon {
     
     @Column(name = "end_date")
     private LocalDate endDate;
+
+    @Column(name = "discount_amount", nullable = true, columnDefinition = "INTEGER DEFAULT 2000")
+    private Integer discountAmount = 2000;
 }

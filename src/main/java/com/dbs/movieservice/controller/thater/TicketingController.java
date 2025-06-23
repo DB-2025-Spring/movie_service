@@ -59,7 +59,6 @@ public class TicketingController {
     public ResponseEntity<?> createTickets(@RequestBody TicketCreateRequest request) {
             String customerInputId = SecurityUtils.getCurrentCustomerInputId();
             Customer customer = customerService.getCustomerByInputId(customerInputId);
-            customer.setCustomerId(request.getCustomerId());
             Schedule schedule = new Schedule();
             schedule.setScheduleId(request.getScheduleId());
             List<Seat> seats = request.getSeatIds().stream().map(seatId->{
@@ -302,6 +301,12 @@ public class TicketingController {
         }
     }
 
+    @GetMapping("/test")
+    public ResponseEntity<?> tempFunction(){
+        System.out.println("호출됨");
+        return ResponseEntity.ok("test");
+    }
+
     /**
      * 티켓 생성용 DTO
      */
@@ -310,7 +315,6 @@ public class TicketingController {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class TicketCreateRequest {
-        private Long customerId;
         private Long scheduleId;
         private List<Long> seatIds;
         private int adultNumber;
