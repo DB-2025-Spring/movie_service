@@ -61,15 +61,18 @@ public class TheaterService {
      * 상영관 수정
      */
     @Transactional
-    public Theater updateTheater(Long theaterId, String theaterName, Integer totalSeats) {
-        Theater theater = theaterRepository.findById(theaterId)
-                .orElseThrow(() -> new RuntimeException("상영관을 찾을 수 없습니다: " + theaterId));
+    public Theater updateTheater(Long id, String name, int rows, int columns) {
+        Theater theater = theaterRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Theater not found"));
 
-        theater.setTheaterName(theaterName);
-        theater.setTotalSeats(totalSeats);
+        theater.setTheaterName(name);
+        theater.setRows(rows);
+        theater.setColumns(columns);
+        theater.setTotalSeats(rows * columns);
 
         return theaterRepository.save(theater);
     }
+
 
     /**
      * 상영관 삭제

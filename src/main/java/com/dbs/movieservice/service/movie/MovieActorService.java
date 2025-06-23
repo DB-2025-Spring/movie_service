@@ -6,6 +6,7 @@ import com.dbs.movieservice.domain.movie.MovieActor;
 import com.dbs.movieservice.repository.movie.MovieActorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -23,5 +24,10 @@ public class MovieActorService {
 
         MovieActor movieActor = new MovieActor(movie, actor);
         return movieActorRepository.save(movieActor);
+    }
+
+    @Transactional(readOnly = true)
+    public void deleteAllActorsByMovieId(Long movieId) {
+        movieActorRepository.deleteByMovie_MovieId(movieId);
     }
 }

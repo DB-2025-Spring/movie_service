@@ -1,5 +1,6 @@
 package com.dbs.movieservice.controller.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -37,6 +38,7 @@ public class MovieRequest {
     private String directorName;
     
     @Schema(description = "영화 설명", example = "마블 시네마틱 유니버스의 클라이맥스를 다룬 대작")
+    @JsonProperty("description")
     private String movieDesc;
     
     @Size(max = 100)
