@@ -17,4 +17,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     // 영화 + 고객 조합 리뷰 (리뷰 중복 방지용)
     Optional<Review> findByMovie_MovieIdAndCustomer_CustomerId(Long movieId, Long customerId);
+    
+    // 특정 고객이 특정 영화에 대해 작성한 리뷰 조회 (무비로그용)
+    Optional<Review> findByCustomer_CustomerIdAndMovie_MovieId(Long customerId, Long movieId);
 }

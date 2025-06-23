@@ -86,4 +86,21 @@ public class ReviewService {
         }
         reviewRepository.deleteById(reviewId);
     }
+
+    /**
+     * 특정 고객이 특정 영화에 대해 작성한 리뷰 조회 (무비로그용)
+     */
+    public Review findReviewByCustomerAndMovie(Long customerId, Long movieId) {
+        return reviewRepository.findByCustomer_CustomerIdAndMovie_MovieId(customerId, movieId)
+                .orElse(null);
+    }
+
+    /**
+     * 리뷰 소유자 확인
+     */
+    public boolean isReviewOwner(Long reviewId, Long customerId) {
+        return reviewRepository.findById(reviewId)
+                .map(review -> review.getCustomer().getCustomerId().equals(customerId))
+                .orElse(false);
+    }
 }

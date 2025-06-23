@@ -530,11 +530,12 @@ public class AdminController {
     @Operation(summary = "상영일정 생성 (간단)", description = "간단한 정보로 새로운 상영일정을 생성합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "생성 성공",
-                content = @Content(schema = @Schema(implementation = Schedule.class))),
+                content = @Content(schema = @Schema(implementation = ScheduleResponse.class))),
         @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
+
     public ResponseEntity<Schedule> createSchedule(@Valid @RequestBody CreateScheduleRequest request) {
         Schedule schedule = scheduleService.createSchedule(
                 request.getTheaterId(),
@@ -544,51 +545,61 @@ public class AdminController {
                 request.getScheduleEndTime()
         );
         return ResponseEntity.ok(schedule);
+
     }
 
     @PostMapping("/schedules/advanced")
     @Operation(summary = "상영일정 생성 (고급)", description = "상세한 정보를 포함하여 새로운 상영일정을 생성합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "생성 성공",
-                content = @Content(schema = @Schema(implementation = Schedule.class))),
+                content = @Content(schema = @Schema(implementation = ScheduleResponse.class))),
         @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<Schedule> createAdvancedSchedule(@Valid @RequestBody AdvancedScheduleRequest request) {
+    public ResponseEntity<ScheduleResponse> createAdvancedSchedule(@Valid @RequestBody AdvancedScheduleRequest request) {
         Schedule savedSchedule = scheduleService.saveSchedule(
             request.getMovieId(), request.getTheaterId(), request.getScheduleDate(),
             request.getScheduleSequence(), request.getScheduleStartTime()
         );
-        return ResponseEntity.ok(savedSchedule);
+        
+        // 연관 엔티티 정보를 명시적으로 로딩하여 DTO로 변환
+        savedSchedule.getMovie().getMovieName(); // lazy loading 초기화
+        savedSchedule.getTheater().getTheaterName(); // lazy loading 초기화
+        
+        return ResponseEntity.ok(ScheduleResponse.from(savedSchedule));
     }
 
     @PutMapping("/schedules/{scheduleId}")
     @Operation(summary = "상영일정 수정", description = "기존 상영일정 정보를 수정합니다.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "수정 성공",
-                    content = @Content(schema = @Schema(implementation = ScheduleResponseDto.class))),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
-            @ApiResponse(responseCode = "404", description = "상영일정을 찾을 수 없음"),
-            @ApiResponse(responseCode = "403", description = "권한 없음"),
-            @ApiResponse(responseCode = "401", description = "인증 실패")
+        @ApiResponse(responseCode = "200", description = "수정 성공",
+                content = @Content(schema = @Schema(implementation = ScheduleResponse.class))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+        @ApiResponse(responseCode = "404", description = "상영일정을 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 없음"),
+        @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<ScheduleResponseDto> updateSchedule(
-            @Parameter(description = "상영일정 ID", example = "1", required = true)
-            @PathVariable Long scheduleId,
+    public ResponseEntity<ScheduleResponse> updateSchedule(
+            @Parameter(description = "상영일정 ID", example = "1", required = true) @PathVariable Long scheduleId,
             @Valid @RequestBody ScheduleRequest request) {
-
+        // scheduleEndTime이 없으면 null로 전달 (updateSchedule에서 자동 계산됨)
         Schedule updatedSchedule = scheduleService.updateSchedule(
+
                 scheduleId,
                 request.getMovieId(),
                 request.getTheaterId(),
                 request.getScheduleDate(),
                 request.getScheduleStartTime(),
                 request.getScheduleEndTime()
-        );
 
-        ScheduleResponseDto responseDto = ScheduleResponseDto.from(updatedSchedule);
-        return ResponseEntity.ok(responseDto);
+        );
+        
+        // 연관 엔티티 정보를 명시적으로 로딩하여 DTO로 변환
+        updatedSchedule.getMovie().getMovieName(); // lazy loading 초기화
+        updatedSchedule.getTheater().getTheaterName(); // lazy loading 초기화
+        
+        return ResponseEntity.ok(ScheduleResponse.from(updatedSchedule));
     }
 
 
@@ -602,7 +613,6 @@ public class AdminController {
     })
     public ResponseEntity<Void> deleteSchedule(
             @Parameter(description = "상영일정 ID", example = "1", required = true) @PathVariable Long scheduleId) {
-
         scheduleService.deleteSchedule(scheduleId);
         return ResponseEntity.noContent().build();
     }
@@ -1024,9 +1034,11 @@ public class AdminController {
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm")
         private LocalDateTime scheduleStartTime;
 
+
         @Future(message = "마감 시간은 현재보다 이후여야 합니다.")
         @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm")
         private LocalDateTime scheduleEndTime;
+
 
 
 

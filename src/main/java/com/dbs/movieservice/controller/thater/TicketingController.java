@@ -11,6 +11,8 @@ import com.dbs.movieservice.repository.ticketing.TicketRepository;
 import com.dbs.movieservice.service.ticketing.PaymentService;
 import com.dbs.movieservice.service.ticketing.TicketService;
 import com.dbs.movieservice.service.member.CustomerService;
+import com.dbs.movieservice.service.movie.ReviewService;
+import com.dbs.movieservice.domain.movie.Review;
 import com.dbs.movieservice.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -38,6 +40,7 @@ public class TicketingController {
     private final TicketService ticketService;
     private final PaymentService paymentService;
     private final CustomerService customerService;
+    private final ReviewService reviewService;
 //    String customerInputId = SecurityUtils.getCurrentCustomerInputId();
     //todo DTO로 response
 
@@ -277,21 +280,38 @@ public class TicketingController {
             String customerInputId = SecurityUtils.getCurrentCustomerInputId();
             Customer customer = customerService.getCustomerByInputId(customerInputId);
             
+            // 결제 완료된 결제 내역만 조회
             List<Payment> payments = paymentService.getAllPaymentByCustomer(customer);
             
-            // 상영일이 현재보다 이전인 것들만 필터링 (관람 완료)
+            // 결제완료 + 상영일지남 기준으로 관람 완료 영화 필터링
             List<WatchedMovieResponse> watchedMovies = payments.stream()
+                    .filter(payment -> "Approve".equals(payment.getPaymentStatus())) // 결제 완료
                     .flatMap(payment -> payment.getTickets().stream())
                     .filter(ticket -> ticket.getSchedule().getScheduleDate().isBefore(java.time.LocalDate.now())) // 상영일이 지난 것만
-                    .map(ticket -> WatchedMovieResponse.builder()
-                            .movieId(ticket.getSchedule().getMovie().getMovieId())
-                            .title(ticket.getSchedule().getMovie().getMovieName())
-                            .poster("/placeholder.svg") // TODO: 실제 포스터 URL 연결
-                            .watchDate(ticket.getSchedule().getScheduleDate().toString())
-                            .theater(ticket.getSchedule().getTheater().getTheaterName())
-                            .genre("액션") // TODO: 실제 장르 정보 연결
-                            .build())
-                    .distinct() // 중복 제거
+                    .collect(java.util.stream.Collectors.groupingBy(
+                            ticket -> ticket.getSchedule().getMovie().getMovieId())) // 영화별로 그룹화
+                    .entrySet().stream()
+                    .map(entry -> {
+                        Long movieId = entry.getKey();
+                        List<Ticket> movieTickets = entry.getValue();
+                        Ticket firstTicket = movieTickets.get(0); // 첫 번째 티켓 정보 사용
+                        
+                        // 해당 영화에 대한 리뷰 조회
+                        Review existingReview = reviewService.findReviewByCustomerAndMovie(customer.getCustomerId(), movieId);
+                        
+                        return WatchedMovieResponse.builder()
+                                .movieId(movieId)
+                                .title(firstTicket.getSchedule().getMovie().getMovieName())
+                                .poster(firstTicket.getSchedule().getMovie().getImageUrl()) // 실제 포스터 URL 사용
+                                .watchDate(firstTicket.getSchedule().getScheduleDate().toString())
+                                .theater(firstTicket.getSchedule().getTheater().getTheaterName())
+                                .genre("액션") // TODO: 실제 장르 정보 연결
+                                .reviewId(existingReview != null ? existingReview.getReviewId() : null)
+                                .starRating(existingReview != null ? existingReview.getStarRating() : null)
+                                .reviewContent(existingReview != null ? existingReview.getContentDesc() : null)
+                                .hasReview(existingReview != null)
+                                .build();
+                    })
                     .toList();
                     
             return ResponseEntity.ok(watchedMovies);
@@ -399,5 +419,9 @@ public class TicketingController {
         private String watchDate;
         private String theater;
         private String genre;
+        private Long reviewId; // 해당 영화에 대한 리뷰 ID (있는 경우)
+        private Double starRating; // 별점 (있는 경우)
+        private String reviewContent; // 리뷰 내용 (있는 경우)
+        private boolean hasReview; // 리뷰 작성 여부
     }
 }

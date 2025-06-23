@@ -128,7 +128,17 @@ public class IssueCouponService {
         
         log.info("Successfully used coupon with issue ID: {}", issueId);
     }
-    
+
+    public void useCouponWhenPayment(Long customerId, Long couponId) {
+        IssueCoupon issueCoupon = issueCouponRepository
+                .findByCustomer_CustomerIdAndCoupon_CouponIdAndIsUsedFalse(customerId, couponId)
+                .orElse(null);
+
+        if (issueCoupon != null) {
+            issueCoupon.useCoupon();
+        }
+    }
+
     /**
      * 쿠폰 사용 취소
      */

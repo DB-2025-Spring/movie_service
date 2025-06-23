@@ -1,8 +1,11 @@
 package com.dbs.movieservice.controller.thater;
 
+import com.dbs.movieservice.domain.member.Customer;
 import com.dbs.movieservice.domain.ticketing.Payment;
 import com.dbs.movieservice.dto.ConfirmPaymentDTO;
+import com.dbs.movieservice.service.member.CustomerService;
 import com.dbs.movieservice.service.ticketing.PaymentService;
+import com.dbs.movieservice.util.SecurityUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,6 +36,7 @@ public class PaymentController {
     private String secretKey;
     private final ObjectMapper objectMapper;
     private final PaymentService paymentService;
+    private final CustomerService customerService;
 
     @GetMapping("/test")
     public ResponseEntity<?> test(){
@@ -86,13 +90,29 @@ public class PaymentController {
         }
     }
 
-    //todo cancel할때 권한조회 하기
     @PostMapping("/cancel")
     public ResponseEntity<String> cancelPayment(@RequestParam Long paymentId) {
-        // 1. paymentId로 결제 정보 조회 (결제 상태 등 확인)
-        Payment payment = paymentService.getPayment(paymentId); // 별도 조회 메서드가 없다면 findById 직접 호출해도 됨
-        if (!"Approve".equalsIgnoreCase(payment.getPaymentStatus())) {
-            return ResponseEntity.badRequest().body("아직 승인되지 않았거나 이미 취소된 결제입니다.");
+        Payment payment;
+        try {
+            // 1. 현재 로그인한 사용자 조회 (회원 및 비회원 모두 지원)
+            String currentCustomerInputId = SecurityUtils.getCurrentCustomerInputId();
+            Customer currentCustomer = customerService.getCustomerByInputId(currentCustomerInputId);
+            
+            // 2. paymentId로 결제 정보 조회 (결제 상태 등 확인)
+            payment = paymentService.getPayment(paymentId);
+            
+            // 3. 권한 확인 - 결제한 고객과 현재 로그인한 고객이 같은지 확인 (회원/비회원 구분 없이)
+            if (!payment.getCustomer().getCustomerId().equals(currentCustomer.getCustomerId())) {
+                return ResponseEntity.status(403).body("해당 결제를 취소할 권한이 없습니다.");
+            }
+            
+            // 4. 결제 상태 확인
+            if (!"Approve".equalsIgnoreCase(payment.getPaymentStatus())) {
+                return ResponseEntity.badRequest().body("아직 승인되지 않았거나 이미 취소된 결제입니다.");
+            }
+        } catch (RuntimeException e) {
+            log.error("결제 취소 권한 확인 실패", e);
+            return ResponseEntity.status(401).body("인증이 필요합니다.");
         }
 
         String paymentKey = payment.getPaymentKey();
@@ -128,6 +148,16 @@ public class PaymentController {
             return ResponseEntity.status(e.getStatusCode()).body("환불 실패: " + e.getResponseBodyAsString());
         }
     }
+
+    @PostMapping("/fail")
+    public ResponseEntity<String> failPayment(@RequestParam String orderId) {
+        String numericPart = orderId.replaceAll("\\D+", "");
+        Long paymentId = Long.parseLong(numericPart);
+        Payment payment = paymentService.cancelPayment(paymentId);
+        return ResponseEntity.ok("결제 취소 완료");
+
+    }
+
 
     @Data
     public static class TossApproveResponse {
