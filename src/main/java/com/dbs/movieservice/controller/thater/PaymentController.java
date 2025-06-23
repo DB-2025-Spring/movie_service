@@ -36,7 +36,7 @@ public class PaymentController {
 
     @GetMapping("/test")
     public ResponseEntity<?> test(){
-        ConfirmPaymentDTO dto=paymentService.confirmPayment(9L,"asdff",1,"asdf");
+        ConfirmPaymentDTO dto=paymentService.confirmPayment(9L,"asdff",1,"asdf",1L);
         return ResponseEntity.ok("성공");
     }
 
@@ -76,7 +76,7 @@ public class PaymentController {
             String approveNumber = approveResponse.approveNo;
             String numericPart = orderId.replaceAll("\\D+", ""); //숫자가 아니면 전부 공백처리. payment3 -> 3
             Long paymentId = Long.parseLong(numericPart);
-            ConfirmPaymentDTO payment = paymentService.confirmPayment(paymentId,paymentKey,0,fixedMethod);
+            ConfirmPaymentDTO payment = paymentService.confirmPayment(paymentId,paymentKey,0,fixedMethod, usedCouponId);
             return ResponseEntity.ok("결제 승인 성공. paymentId: "+payment.getPaymentId());
         } catch (HttpClientErrorException e) {
             return ResponseEntity.status(e.getStatusCode()).body("승인 실패: " + e.getResponseBodyAsString());

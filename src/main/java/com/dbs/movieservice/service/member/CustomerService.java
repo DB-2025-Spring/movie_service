@@ -136,12 +136,12 @@ public class CustomerService {
     }
 
     public Customer addCustomerPoint(Customer customer, int points) {
-        Customer findCustomer = findByCustomerId(customer.getCustomerId());
+
         System.out.println("더하기 전");
-        System.out.println(findCustomer.getPoints());
+        System.out.println(customer.getPoints());
         customer.setPoints(customer.getPoints() + points);
         System.out.println("더하기 후");
-        System.out.println(findCustomer.getPoints());
+        System.out.println(customer.getPoints());
         return customerRepository.save(customer);
     }
 

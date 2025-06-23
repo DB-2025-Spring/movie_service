@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface IssueCouponRepository extends JpaRepository<IssueCoupon, Long> {
     
@@ -54,4 +55,6 @@ public interface IssueCouponRepository extends JpaRepository<IssueCoupon, Long> 
            "AND c.endDate >= CURRENT_DATE " +
            "ORDER BY ic.issuedAt DESC")
     List<IssueCoupon> findAvailableCouponsByCustomerId(@Param("customerId") Long customerId);
+
+    Optional<IssueCoupon> findByCustomer_CustomerIdAndCoupon_CouponIdAndIsUsedFalse(Long customerId, Long couponId);
 }
