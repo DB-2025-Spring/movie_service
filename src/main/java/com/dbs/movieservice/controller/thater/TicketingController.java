@@ -283,11 +283,10 @@ public class TicketingController {
             // 결제 완료된 결제 내역만 조회
             List<Payment> payments = paymentService.getAllPaymentByCustomer(customer);
             
-            // 결제완료 + 상영일지남 기준으로 관람 완료 영화 필터링
+            // 결제완료 기준으로 관람 완료 영화 필터링
             List<WatchedMovieResponse> watchedMovies = payments.stream()
-                    .filter(payment -> "Approve".equals(payment.getPaymentStatus())) // 결제 완료
+                    .filter(payment -> "Approve".equals(payment.getPaymentStatus())) // 결제 완료만 체크
                     .flatMap(payment -> payment.getTickets().stream())
-                    .filter(ticket -> ticket.getSchedule().getScheduleDate().isBefore(java.time.LocalDate.now())) // 상영일이 지난 것만
                     .collect(java.util.stream.Collectors.groupingBy(
                             ticket -> ticket.getSchedule().getMovie().getMovieId())) // 영화별로 그룹화
                     .entrySet().stream()

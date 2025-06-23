@@ -72,7 +72,7 @@ public class ReviewController {
                 return ResponseEntity.badRequest().body("본인의 리뷰만 작성할 수 있습니다.");
             }
             
-            // 해당 영화를 실제로 관람했는지 확인 (결제완료 + 상영일지남)
+            // 해당 영화를 실제로 관람했는지 확인 (결제완료)
             boolean hasWatchedMovie = ticketService.hasWatchedMovie(currentCustomerId, request.getMovieId());
             if (!hasWatchedMovie) {
                 return ResponseEntity.badRequest().body("관람한 영화에 대해서만 리뷰를 작성할 수 있습니다.");
