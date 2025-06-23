@@ -40,7 +40,7 @@ public class MovieDto {
     private final String coo;
 
     private final List<GenreDto> genres;
-    private final List<String> actors;
+    private final List<ActorDto> actors;
 
     public MovieDto(Movie movie) {
         this.movieId = movie.getMovieId();
@@ -59,8 +59,8 @@ public class MovieDto {
                 .collect(Collectors.toList());
 
         this.actors = movie.getMovieActors().stream()
-                .filter(actor -> actor.getActor() != null)
-                .map(actor -> actor.getActor().getActorName())
+                .filter(ma -> ma.getActor() != null)
+                .map(ma -> new ActorDto(ma.getActor()))
                 .collect(Collectors.toList());
 
     }

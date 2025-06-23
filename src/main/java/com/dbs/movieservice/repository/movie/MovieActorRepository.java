@@ -11,4 +11,6 @@ public interface MovieActorRepository extends JpaRepository<MovieActor, MovieAct
 
     // 배우 기준 출연 영화
     List<MovieActor> findByActor_ActorId(Long actorId);
+
+    void deleteByMovie_MovieId(Long movieId);
 }

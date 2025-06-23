@@ -12,18 +12,21 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "상영관 정보 요청 DTO")
-public class TheaterRequest {
-    
+@Schema(description = "상영관 수정 요청 DTO")
+public class TheaterUpdateRequest {
+
     @NotBlank
     @Size(min = 1, max = 100)
     @Schema(description = "상영관명", example = "1관", required = true)
     private String theaterName;
-    
+
     @NotNull
     @Positive
-    @Schema(description = "총 좌석수", example = "100", required = true)
-    private Integer totalSeats;
+    @Schema(description = "행 수", example = "10", required = true)
+    private Integer rows;
 
-
-} 
+    @NotNull
+    @Positive
+    @Schema(description = "열 수", example = "15", required = true)
+    private Integer columns;
+}

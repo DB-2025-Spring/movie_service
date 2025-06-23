@@ -18,4 +18,6 @@ public interface MovieGenreRepository extends JpaRepository<MovieGenre, MovieGen
     // 장르 ID 기준으로 영화 직접 가져오기 (DTO화도 가능)
     @Query("SELECT mg.movie FROM MovieGenre mg WHERE mg.genre.genreId = :genreId")
     List<Movie> findMoviesByGenreId(@Param("genreId") Long genreId);
+
+    void deleteByMovie_MovieId(Long movieId);
 }

@@ -113,16 +113,26 @@ public class AdminController {
         @ApiResponse(responseCode = "403", description = "권한 없음"),
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    public ResponseEntity<Movie> updateMovie(
+    public ResponseEntity<MovieDto> updateMovie(
             @Parameter(description = "영화 ID", example = "1", required = true) @PathVariable Long movieId, 
             @Valid @RequestBody MovieRequest request) {
         Movie updatedMovie = movieService.updateMovie(
-            movieId, request.getViewRating(), request.getMovieName(),
-            request.getRunningTime(), request.getDirectorName(), request.getMovieDesc(),
-            request.getDistributor(), request.getImageUrl(), request.getReleaseDate(),
-            request.getEndDate(), request.getCoo()
+                movieId,
+                request.getViewRating(),
+                request.getMovieName(),
+                request.getRunningTime(),
+                request.getDirectorName(),
+                request.getMovieDesc(),
+                request.getDistributor(),
+                request.getImageUrl(),
+                request.getReleaseDate(),
+                request.getEndDate(),
+                request.getCoo()
         );
-        return ResponseEntity.ok(updatedMovie);
+
+        MovieDto movieDto = new MovieDto(updatedMovie);
+        return ResponseEntity.ok(movieDto);
+
     }
 
     @DeleteMapping("/movies/{movieId}")
@@ -138,6 +148,40 @@ public class AdminController {
         movieService.deleteMovie(movieId);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/movie-genre/{movieId}")
+    @Operation(summary = "영화의 장르 수정", description = "영화 ID에 해당하는 기존 장르를 제거하고 새로운 장르 ID들로 대체합니다.")
+    public ResponseEntity<?> updateMovieGenres(
+            @PathVariable Long movieId,
+            @RequestBody CreateMovieGenreRequest request
+    ) {
+        // 1. 기존 장르 연관 삭제
+        movieGenreService.deleteAllGenresByMovieId(movieId);
+
+        // 2. 새 장르 등록
+        for (Long genreId : request.getMovieGenres()) {
+            movieGenreService.createMovieGenre(movieId, genreId);
+        }
+
+        return ResponseEntity.ok().build();
+    }
+    @PutMapping("/movie-actor/{movieId}")
+    @Operation(summary = "영화의 배우 수정", description = "영화 ID에 해당하는 기존 배우들을 제거하고 새로운 배우 ID들로 대체합니다.")
+    public ResponseEntity<?> updateMovieActors(
+            @PathVariable Long movieId,
+            @RequestBody CreateMovieActorRequest request
+    ) {
+        // 1. 기존 배우 연관 삭제
+        movieActorService.deleteAllActorsByMovieId(movieId);
+
+        // 2. 새 배우 등록
+        for (Long actorId : request.getMovieActors()) {
+            movieActorService.createMovieActor(movieId, actorId);
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
 
     // 배우 관리
     
@@ -308,12 +352,16 @@ public class AdminController {
         @ApiResponse(responseCode = "401", description = "인증 실패")
     })
     public ResponseEntity<Theater> updateTheater(
-            @Parameter(description = "상영관 ID", example = "1", required = true) @PathVariable Long theaterId,
-            @Valid @RequestBody TheaterRequest request) {
-        Theater updatedTheater = theaterService.updateTheater(
-            theaterId, request.getTheaterName(), request.getTotalSeats()
+            @PathVariable Long theaterId,
+            @Valid @RequestBody TheaterUpdateRequest request
+    ) {
+        Theater updated = theaterService.updateTheater(
+                theaterId,
+                request.getTheaterName(),
+                request.getRows(),
+                request.getColumns()
         );
-        return ResponseEntity.ok(updatedTheater);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/theaters/{theaterId}")
