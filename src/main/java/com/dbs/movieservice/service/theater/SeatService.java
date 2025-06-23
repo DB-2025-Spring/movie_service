@@ -3,6 +3,7 @@ package com.dbs.movieservice.service.theater;
 import com.dbs.movieservice.controller.dto.SeatBulkCreateRequest;
 import com.dbs.movieservice.domain.theater.Seat;
 import com.dbs.movieservice.domain.theater.Theater;
+import com.dbs.movieservice.repository.theater.SeatAvailableRepository;
 import com.dbs.movieservice.repository.theater.SeatRepository;
 import com.dbs.movieservice.repository.theater.TheaterRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -21,6 +22,7 @@ import java.util.Optional;
 public class SeatService {
     private final SeatRepository seatRepository;
     private final TheaterRepository theaterRepository;
+    private final SeatAvailableRepository seatAvailableRepository;
 
     /**
      * 기존 메서드 - seat의 생성자. 이때, 상영관이 먼저 존재하는지 부터 확인함.
@@ -103,12 +105,24 @@ public class SeatService {
     public void deleteSeat(Long seatId) {
         Seat seat = seatRepository.findById(seatId)
                 .orElseThrow(() -> new RuntimeException("좌석을 찾을 수 없습니다: " + seatId));
-        
+
+        // 🔥 먼저 seatAvailable 제거
+        seatAvailableRepository.deleteAllBySeatId(seat.getSeatId());
+
+        // ✅ 연결된 theater의 총 좌석수 감소
         Theater theater = seat.getTheater();
         theater.setTotalSeats(theater.getTotalSeats() - 1);
-        
+
+        // ✅ 좌석 제거
         seatRepository.deleteById(seatId);
     }
+
+    @Transactional
+    public void deleteSeats(List<Long> seatIds) {
+        seatAvailableRepository.deleteAllBySeatIds(seatIds);
+        seatRepository.deleteAllById(seatIds);
+    }
+
 
     public Seat parseColRowToId(Theater theater, Integer rowNumber, Integer columnNumber) {
         return seatRepository.findByTheaterAndRowNumberAndColumnNumber(theater,rowNumber,columnNumber);
