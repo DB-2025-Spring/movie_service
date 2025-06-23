@@ -129,6 +129,16 @@ public class PaymentController {
         }
     }
 
+    @PostMapping("/fail")
+    public ResponseEntity<String> failPayment(@RequestParam String orderId) {
+        String numericPart = orderId.replaceAll("\\D+", "");
+        Long paymentId = Long.parseLong(numericPart);
+        Payment payment = paymentService.cancelPayment(paymentId);
+        return ResponseEntity.ok("결제 취소 완료");
+
+    }
+
+
     @Data
     public static class TossApproveResponse {
         private String orderId;
