@@ -61,5 +61,15 @@ public interface SeatAvailableRepository extends JpaRepository<SeatAvailable, Se
     @Query("DELETE FROM SeatAvailable sa WHERE sa.id.scheduleId = :scheduleId")
     void deleteAllBySchedule(@Param("scheduleId") Long scheduleId);
 
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM SeatAvailable sa WHERE sa.id.seatId = :seatId")
+    void deleteAllBySeatId(@Param("seatId") Long seatId);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM SeatAvailable sa WHERE sa.id.seatId IN :seatIds")
+    void deleteAllBySeatIds(@Param("seatIds") List<Long> seatIds);
+
 
 }
