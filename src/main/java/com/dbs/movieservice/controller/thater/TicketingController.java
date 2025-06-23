@@ -255,6 +255,7 @@ public class TicketingController {
                                     .status("예매완료") // paymentCancel 필드가 없으므로 기본값
                                     .bookingDate(payment.getPaymentDate().toString())
                                     .bookingNumber("TKT" + payment.getPaymentId())
+                                    .imageUrl(ticket.getSchedule().getMovie().getImageUrl())
                                     .build()))
                     .toList();
                     
@@ -402,6 +403,7 @@ public class TicketingController {
         private String status;
         private String bookingDate;
         private String bookingNumber;
+        private String imageUrl;
     }
 
     /**
