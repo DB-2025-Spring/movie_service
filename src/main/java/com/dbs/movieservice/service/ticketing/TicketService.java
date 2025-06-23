@@ -11,6 +11,7 @@ import com.dbs.movieservice.service.theater.SeatAvailableService;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -170,6 +171,23 @@ public class TicketService {
         if (hasInvalidOwner) {
             throw new RuntimeException("티켓에 대한 접근 권한이 없습니다.");
         }
+    }
+
+    /**
+     * 특정 고객이 특정 영화를 관람했는지 확인 (결제완료 + 상영일지남)
+     * @param customerId 고객 ID
+     * @param movieId 영화 ID
+     * @return 관람 여부
+     */
+    @Transactional(readOnly = true)
+    public boolean hasWatchedMovie(Long customerId, Long movieId) {
+        List<Ticket> tickets = ticketRepository.findByCustomer_CustomerId(customerId);
+        
+        return tickets.stream()
+                .filter(ticket -> ticket.getPayment() != null) // 결제가 있는 티켓만
+                .filter(ticket -> "Approve".equals(ticket.getPayment().getPaymentStatus())) // 결제 완료
+                .filter(ticket -> ticket.getSchedule().getMovie().getMovieId().equals(movieId)) // 해당 영화
+                .anyMatch(ticket -> ticket.getSchedule().getScheduleDate().isBefore(LocalDate.now())); // 상영일이 지남
     }
 
 

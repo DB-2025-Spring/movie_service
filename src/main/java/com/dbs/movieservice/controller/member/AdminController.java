@@ -594,7 +594,6 @@ public class AdminController {
     })
     public ResponseEntity<Void> deleteSchedule(
             @Parameter(description = "상영일정 ID", example = "1", required = true) @PathVariable Long scheduleId) {
-
         scheduleService.deleteSchedule(scheduleId);
         return ResponseEntity.noContent().build();
     }
@@ -1010,11 +1009,6 @@ public class AdminController {
         @NotNull(message = "시작 시간은 필수입니다.")
         @Future(message = "시작 시간은 현재보다 이후여야 합니다.")
         private LocalDateTime scheduleStartTime;
-
-        @Future(message = "마감 시간은 현재보다 이후여야 합니다.")
-        private LocalDateTime scheduleEndTime;
-
-
     }
 
     /**
