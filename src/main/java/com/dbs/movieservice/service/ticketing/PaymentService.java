@@ -9,6 +9,7 @@ import com.dbs.movieservice.dto.ConfirmPaymentDTO;
 import com.dbs.movieservice.repository.ticketing.PaymentRepository;
 import com.dbs.movieservice.service.member.CardService;
 import com.dbs.movieservice.service.member.CustomerService;
+import com.dbs.movieservice.service.member.IssueCouponService;
 import com.dbs.movieservice.service.member.LevelUpService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -27,12 +28,17 @@ public class PaymentService {
     private final CardService cardService;
     private final LevelUpService levelUpService;
     private final CustomerService customerService;
-    public PaymentService(TicketService ticketService, PaymentRepository paymentRepository, CardService cardService, LevelUpService levelUpService, CustomerService customerService) {
+    private final CouponService couponService;
+    private final IssueCouponService issueCouponService;
+
+    public PaymentService(TicketService ticketService, PaymentRepository paymentRepository, CardService cardService, LevelUpService levelUpService, CustomerService customerService, CouponService couponService, IssueCouponService issueCouponService) {
         this.ticketService = ticketService;
         this.paymentRepository = paymentRepository;
         this.cardService = cardService;
         this.levelUpService = levelUpService;
         this.customerService = customerService;
+        this.couponService = couponService;
+        this.issueCouponService = issueCouponService;
     }
 
     @Transactional
@@ -53,7 +59,7 @@ public class PaymentService {
     
     //todo 포인트 증감로직 + 등급업(countCustomerTicket(payment.getCustomer())이거 쓰면됨)
     @Transactional
-    public ConfirmPaymentDTO confirmPayment(Long paymentId, String paymentKey, int approveNumber, String paymentMethod) {
+    public ConfirmPaymentDTO confirmPayment(Long paymentId, String paymentKey, int approveNumber, String paymentMethod, Long usedCoupon) {
         // 1. Payment 조회
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new IllegalArgumentException("결제 내역이 존재하지 않습니다."));
@@ -84,9 +90,12 @@ public class PaymentService {
         System.out.println(customer.getCustomerInputId());
         System.out.println(customer.getLevel().getRewardRate());
         System.out.println("///////");
+        //포인트 사용
+        customerService.addCustomerPoint(customer, -1*payment.getUsedPoints());
         customerService.addCustomerPoint(customer, (int) (payment.getPaymentAmount()*customer.getLevel().getRewardRate()));
         levelUpService.processLevelUp(customer.getCustomerInputId(),approveTickets.size());
-
+        // 쿠폰 사용
+        issueCouponService.useCouponWhenPayment(customer.getCustomerId(),usedCoupon);
         ConfirmPaymentDTO dto = new ConfirmPaymentDTO();
         dto.setPaymentId(paymentId);
         dto.setCustomerInputId(customer.getCustomerInputId());

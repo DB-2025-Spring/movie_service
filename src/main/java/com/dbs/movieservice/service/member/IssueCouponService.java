@@ -128,7 +128,15 @@ public class IssueCouponService {
         
         log.info("Successfully used coupon with issue ID: {}", issueId);
     }
-    
+
+    public void useCouponWhenPayment(Long customerId, Long couponId) {
+        IssueCoupon issueCoupon = issueCouponRepository
+                .findByCustomer_CustomerIdAndCoupon_CouponIdAndIsUsedFalse(customerId, couponId)
+                .orElseThrow(() -> new IllegalArgumentException("사용 가능한 쿠폰이 존재하지 않습니다."));
+
+        issueCoupon.useCoupon();
+    }
+
     /**
      * 쿠폰 사용 취소
      */
